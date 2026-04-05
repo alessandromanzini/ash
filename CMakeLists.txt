@@ -1,8 +1,8 @@
-# "cmake-lists": mongoose, "author": alessandromanzini
+# "cmake-lists": ash, "author": alessandromanzini
 # top-level cmake file, includes the lib and test subdirectories.
 #
 cmake_minimum_required( VERSION 3.29 )
-project( mongoose
+project( ash
          VERSION 0.1.0
          DESCRIPTION "A modern C++ error handling library."
          LANGUAGES CXX )
@@ -82,7 +82,7 @@ endforeach()
 # PROJECT OPTIONS
 # ========================================
 #
-option( MONGOOSE_BUILD_TESTS "Build test executable" ON )
+option( ASH_BUILD_TESTS "Build test executable" ON )
 #
 #
 # ========================================
@@ -93,6 +93,6 @@ option( MONGOOSE_BUILD_TESTS "Build test executable" ON )
 add_subdirectory( "lib" )
 #
 # test executable
-if( ${MONGOOSE_BUILD_TESTS} )
+if( ${ASH_BUILD_TESTS} )
     add_subdirectory( "test" )
 endif()

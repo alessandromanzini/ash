@@ -1,10 +1,10 @@
-#include <mongoose/__module/library.hpp>
+#include "ash/__module/library.hpp"
 
-#include <mongoose/cbridge.hpp>
-#include <mongoose/__module/dialog.hpp>
+#include "ash/cbridge.hpp"
+#include "ash/__module/dialog.hpp"
 
 
-namespace mongoose
+namespace ash
 {
    auto log( std::source_location const source_location ) -> void
    {

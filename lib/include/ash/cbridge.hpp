@@ -1,7 +1,7 @@
 #ifndef MONGOOSE_CBRIDGE_HPP
 #define MONGOOSE_CBRIDGE_HPP
 
-#include <mongoose/pch.hpp>
+#include "ash/pch.hpp"
 
 
 #if defined(_MSC_VER)
@@ -14,7 +14,7 @@
 #endif
 
 
-namespace mongoose::cbridge
+namespace ash::cbridge
 {
 }
 

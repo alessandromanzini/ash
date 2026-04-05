@@ -4,13 +4,12 @@
 #define ASH_HPP
 
 
-#include "mongoose/pch.hpp"
+#include "ash/pch.hpp"
 
-#include "mongoose/__config/config.hpp"
-#include "mongoose/__config/export.hpp"
-#include "mongoose/__module/dialog.hpp"
-#include "mongoose/__module/library.hpp"
-#include "mongoose/mongoose.hpp"
+#include "ash/__config/config.hpp"
+#include "ash/__config/export.hpp"
+#include "ash/__module/dialog.hpp"
+#include "ash/__module/library.hpp"
 
 
 #endif //!ASH_HPP

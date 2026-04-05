@@ -1,12 +1,12 @@
 #ifndef SWIFTLOG_LIBRARY_HPP
 #define SWIFTLOG_LIBRARY_HPP
 
-#include <mongoose/pch.hpp>
+#include "ash/pch.hpp"
 
 
-namespace mongoose
+namespace ash
 {
-   MONGOOSE_EXPORT void log(std::source_location source_location = std::source_location::current());
+   ASH_EXPORT void log(std::source_location source_location = std::source_location::current());
 
    // class LogBuilder
    // {

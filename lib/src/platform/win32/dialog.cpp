@@ -1,9 +1,9 @@
-#include <mongoose/__module/dialog.hpp> // CHeck standard __dependencies plural/singular convention
+#include "ash/__module/dialog.hpp"
 
 #import <Cocoa/Cocoa.h>
 
 
-namespace mongoose
+namespace ash
 {
    // [[nodiscard]] auto init_alert( char const* const title, Dialog::Style const style ) noexcept -> NSAlert*
    // {
