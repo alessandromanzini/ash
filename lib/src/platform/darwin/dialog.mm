@@ -1,4 +1,4 @@
-#include <mongoose/__module/dialog.hpp>
+#include "ash/__module/dialog.hpp"
 
 #include <AppKit/AppKit.h>
 #import  <Cocoa/Cocoa.h>
@@ -18,7 +18,7 @@
 @end
 
 
-namespace mongoose
+namespace ash
 {
    // -------------------------------------------------------------------------
    // CONSTANTS

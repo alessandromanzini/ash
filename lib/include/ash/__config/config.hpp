@@ -1,8 +1,8 @@
-#ifndef MONGOOSE_CONFIG_HPP
-#define MONGOOSE_CONFIG_HPP
+#ifndef ASH_CONFIG_HPP
+#define ASH_CONFIG_HPP
 
 
-namespace mongoose
+namespace ash
 {
    enum class PlatformType
    {
@@ -16,7 +16,7 @@ namespace mongoose
    };
 }
 
-namespace mongoose
+namespace ash
 {
    // +--------------------------------+
    // | DEBUG MODE                     |
@@ -63,4 +63,4 @@ namespace mongoose
 }
 
 
-#endif //!MONGOOSE_CONFIG_HPP
+#endif //!ASH_CONFIG_HPP

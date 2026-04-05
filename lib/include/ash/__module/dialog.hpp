@@ -1,10 +1,10 @@
-#ifndef MONGOOSE_DIALOG_HPP
-#define MONGOOSE_DIALOG_HPP
+#ifndef ASH_DIALOG_HPP
+#define ASH_DIALOG_HPP
 
-#include <mongoose/pch.hpp>
+#include "ash/pch.hpp"
 
 
-namespace mongoose
+namespace ash
 {
    // +--------------------------------+
    // | ENUMERATIONS                   |
@@ -135,4 +135,4 @@ namespace mongoose
 }
 
 
-#endif //!MONGOOSE_DIALOG_HPP
+#endif //!ASH_DIALOG_HPP

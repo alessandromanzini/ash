@@ -1,9 +1,9 @@
-#ifndef MONGOOSE_PCH_HPP
-#define MONGOOSE_PCH_HPP
+#ifndef ASH_PCH_HPP
+#define ASH_PCH_HPP
 
 
-#include <mongoose/__config/config.hpp>
-#include <mongoose/__config/export.hpp>
+#include "ash/__config/config.hpp"
+#include "ash/__config/export.hpp"
 
 #include <csignal>
 #include <cstddef>
@@ -15,4 +15,4 @@
 #include <string_view>
 
 
-#endif //!MONGOOSE_PCH_HPP
+#endif //!ASH_PCH_HPP
