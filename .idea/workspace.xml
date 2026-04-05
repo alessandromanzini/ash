@@ -34,31 +34,8 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b4c5d3d2-31f6-48a5-bdb5-4b9bc4bc8b36" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/swiftlog.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/ash/ash.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/ash.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/__config/config.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/__config/config.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/__config/export.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/__config/export.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/__module/dialog.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/__module/dialog.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/__module/library.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/__module/library.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/cbridge.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/cbridge.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/mongoose.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/include/mongoose/pch.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/include/ash/pch.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/platform/compiler/clang_cbridge.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/platform/compiler/clang_cbridge.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/platform/compiler/gnu_cbridge.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/platform/compiler/gnu_cbridge.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/platform/compiler/msvc_cbridge.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/platform/compiler/msvc_cbridge.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/platform/darwin/dialog.mm" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/platform/darwin/dialog.mm" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/platform/win32/dialog.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/platform/win32/dialog.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/shared/library.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/shared/library.cpp" afterDir="false" />
+    <list default="true" id="b4c5d3d2-31f6-48a5-bdb5-4b9bc4bc8b36" name="Changes" comment="[chore] apply project naming.">
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +89,7 @@
     "RunOnceActivity.west.config.association.type.startup.service": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "Merging main",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -157,8 +134,17 @@
       <option name="presentableId" value="Default" />
       <updated>1775424706229</updated>
       <workItem from="1775424707630" duration="410000" />
-      <workItem from="1775425137143" duration="148000" />
+      <workItem from="1775425137143" duration="517000" />
     </task>
+    <task id="LOCAL-00001" summary="[chore] apply project naming.">
+      <option name="closed" value="true" />
+      <created>1775425342385</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1775425342385</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -168,6 +154,10 @@
     <isAutomaticCheckingOnLaunch value="false" />
     <isAutomaticFoundErrors value="true" />
     <isAutomaticReloadCMake value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="[chore] apply project naming." />
+    <option name="LAST_COMMIT_MESSAGE" value="[chore] apply project naming." />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
