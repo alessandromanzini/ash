@@ -38,16 +38,15 @@ bld/
 [Tt]est/
 !lib/src/*/win32
 
-# Visual Studio 2015/2017 cache/options directory
+# IDE
 .vs/
+.idea/
+
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
 # Visual Studio 2017 auto generated files
 Generated\ Files/
-
-# CLion
-#.idea/
 
 # Claude
 CLAUDE.md

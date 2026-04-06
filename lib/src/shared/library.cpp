@@ -1,6 +1,5 @@
 #include "ash/__module/library.hpp"
 
-#include "ash/cbridge.hpp"
 #include "ash/__module/dialog.hpp"
 
 
@@ -9,26 +8,21 @@ namespace ash
    auto log( std::source_location const source_location ) -> void
    {
       std::string const where = std::format(
-         "{} at {}:{}:{}", source_location.function_name( ), source_location.file_name( ), source_location.line( ),
-         source_location.column( ) );
+            "{} at {}:{}:{}", source_location.function_name( ), source_location.file_name( ), source_location.line( ),
+            source_location.column( ) );
 
-      auto res = Dialog{ "Assertion" }
-                 .with_text_field(
-                    {
-                       .content = "Log manager needs a default property."
-                    } )
-                 .with_text_field(
-                    {
-                       .content = where,
-                       .font_size = 10.f,
-                       .font_style = DialogFontStyle::italic,
-                       .alignment = DialogTextAlignment::left
-                    } )
-                 .with_option( "Ignore" )
-                 .with_option( "Mute", Dialog::OptionTag::primary )
-                 .with_option( "Debug" )
-                 .with_option( "Exit", Dialog::OptionTag::cancel )
-                 .display( );
+      auto const res = Dialog{ "Assertion" }
+                             .with_text_field( { .content = "Log manager needs a default property." } )
+                             .with_text_field(
+                                   { .content    = where,
+                                     .font_size  = 10.f,
+                                     .font_style = DialogFontStyle::italic,
+                                     .alignment  = DialogTextAlignment::left } )
+                             .with_option( "Ignore" )
+                             .with_option( "Mute", Dialog::OptionTag::primary )
+                             .with_option( "Debug" )
+                             .with_option( "Exit", Dialog::OptionTag::cancel )
+                             .display( );
       std::print( "Jakub likes minors: {}", res );
    }
 }

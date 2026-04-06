@@ -11,12 +11,17 @@ namespace ash
    // +--------------------------------+
    enum class DialogFontStyle : uint8_t
    {
-      normal, bold, italic
+      normal,
+      bold,
+      italic
    };
 
    enum class DialogTextAlignment : uint8_t
    {
-      left, center, right, justified
+      left,
+      center,
+      right,
+      justified
    };
 
    // +--------------------------------+
@@ -24,8 +29,10 @@ namespace ash
    // +--------------------------------+
    struct DialogTextField
    {
-      std::string_view    content{};
-      float               font_size  = 16.f;
+      static constexpr float default_dialog_font_size = 16.f;
+
+      std::string_view    content;
+      float               font_size  = default_dialog_font_size;
       DialogFontStyle     font_style = DialogFontStyle::normal;
       DialogTextAlignment alignment  = DialogTextAlignment::left;
    };
@@ -38,15 +45,18 @@ namespace ash
    public:
       enum class Style : uint8_t
       {
-         information, warning, critical
+         information,
+         warning,
+         critical
       };
 
       enum class OptionTag : uint8_t
       {
-         none, primary, cancel
+         none,
+         primary,
+         cancel
       };
 
-   public:
       explicit Dialog( std::string_view title ) noexcept;
       ~Dialog( ) noexcept = default;
 
@@ -57,10 +67,10 @@ namespace ash
 
       // auto set_icon( DialogIcon const icon ) -> void;
 
-      auto set_minimum_width( this auto&& self, float width ) noexcept -> decltype(self);
+      auto set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self );
 
-      auto with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype(self);
-      auto with_option( this auto&& self, std::string_view option, OptionTag tag = OptionTag::none ) noexcept -> decltype(self);
+      auto with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype( self );
+      auto with_option( this auto&& self, std::string_view option, OptionTag tag = OptionTag::none ) noexcept -> decltype( self );
 
       auto display( ) noexcept -> std::string_view;
 
@@ -69,30 +79,32 @@ namespace ash
 
       std::string_view const title_;
 
-      std::optional<float> min_width_{};
+      std::optional<float> min_width_;
 
       static constexpr size_t                             max_accessories_count_ = 6U;
-      std::array<DialogTextField, max_accessories_count_> text_fields_{}; // make in_place_vector
-      std::array<char const*, max_accessories_count_>     options_{};
+      std::array<DialogTextField, max_accessories_count_> text_fields_{ };  // make in_place_vector
+      std::array<char const*, max_accessories_count_>     options_{ };
 
       uint8_t                text_field_count_ = 0U;
       uint8_t                options_count_    = 0U;
-      std::optional<uint8_t> default_option_{};
-      std::optional<uint8_t> cancel_option_{};
+      std::optional<uint8_t> default_option_;
+      std::optional<uint8_t> cancel_option_;
    };
 
 
-   inline Dialog::Dialog( std::string_view const title ) noexcept : title_{ title } { }
+   inline Dialog::Dialog( std::string_view const title ) noexcept
+       : title_{ title }
+   { }
 
 
-   auto Dialog::set_minimum_width( this auto&& self, float width ) noexcept -> decltype(self)
+   auto Dialog::set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self )
    {
       self.min_width_ = width;
       return self;
    }
 
 
-   auto Dialog::with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype(self)
+   auto Dialog::with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype( self )
    {
       if ( self.text_field_count_ < self.max_accessories_count_ )
       {
@@ -102,7 +114,7 @@ namespace ash
    }
 
 
-   auto Dialog::with_option( this auto&& self, std::string_view option, OptionTag const tag ) noexcept -> decltype(self)
+   auto Dialog::with_option( this auto&& self, std::string_view option, OptionTag const tag ) noexcept -> decltype( self )
    {
       if ( self.options_count_ >= self.max_accessories_count_ || option.empty( ) )
       {
@@ -132,7 +144,7 @@ namespace ash
       //
       return self;
    }
-}
+}  // namespace ash
 
 
-#endif //!ASH_DIALOG_HPP
+#endif  //! ASH_DIALOG_HPP

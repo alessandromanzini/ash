@@ -1,0 +1,215 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# ─── Standard ─────────────────────────────────────────────────────────────────
+
+# Use latest C++ standard for syntax parsing
+Standard: Latest
+
+# ─── Indentation ──────────────────────────────────────────────────────────────
+
+# Number of spaces per indentation level
+IndentWidth: 3
+
+# Tab display width (consistent with IndentWidth)
+TabWidth: 3
+
+# Extra indentation for wrapped lines
+ContinuationIndentWidth: 6
+
+# Indent access modifiers (public/private/protected) relative to class body
+AccessModifierOffset: -3
+
+# Indent case labels inside switch statements
+IndentCaseLabels: true
+
+# Indent code inside namespaces
+NamespaceIndentation: All
+
+# ─── Braces ───────────────────────────────────────────────────────────────────
+
+# Use custom brace wrapping rules defined in BraceWrapping
+BreakBeforeBraces: Custom
+
+# Custom brace wrapping rules
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+# Automatically add braces to single-line control statements
+InsertBraces: true
+
+# ─── Line Breaking ────────────────────────────────────────────────────────────
+
+# Maximum line length before clang-format wraps
+ColumnLimit: 130
+
+# Break all arguments to a new line when they don't fit after open bracket
+AlignAfterOpenBracket: AlwaysBreak
+
+# Do not bin-pack function arguments — each goes on its own line
+BinPackArguments: true
+
+# Do not bin-pack function parameters — each goes on its own line
+BinPackParameters: true
+
+# Place each constructor initializer before the comma
+BreakConstructorInitializers: BeforeComma
+
+# Keep all constructor initializers together or one per line
+PackConstructorInitializers: Never
+
+# Break long string literals across lines
+BreakStringLiterals: true
+
+# ─── Alignment ────────────────────────────────────────────────────────────────
+
+# Align values in consecutive assignment statements
+AlignConsecutiveAssignments: true
+
+# Align types and names in consecutive declarations
+AlignConsecutiveDeclarations: true
+
+# Align values in consecutive macro definitions
+AlignConsecutiveMacros: true
+
+# Align case labels in short consecutive case statements
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+  AlignCaseColons: true
+
+# Align operands of binary/ternary expressions
+AlignOperands: true
+
+# Align trailing comments on consecutive lines
+AlignTrailingComments: true
+
+# ─── Short Statements ─────────────────────────────────────────────────────────
+
+# Allow short case labels to stay on a single line
+AllowShortCaseLabelsOnASingleLine: true
+
+# Allow short if statements to stay on a single line
+AllowShortIfStatementsOnASingleLine: true
+
+# Allow short loops to stay on a single line
+AllowShortLoopsOnASingleLine: true
+
+# ─── Spaces ───────────────────────────────────────────────────────────────────
+
+# Add spaces inside all parentheses
+SpacesInParentheses: true
+
+# Add space inside empty parentheses (e.g. foo( ))
+SpaceInEmptyParentheses: true
+
+# Remove space inside empty braces (e.g. {} -> { })
+SpaceInEmptyBlock: true
+
+# Add spaces inside conditional parentheses (e.g. if ( x ))
+SpacesInConditionalStatement: true
+
+# Add spaces inside C-style cast parentheses (e.g. ( int )x)
+SpacesInCStyleCastParentheses: true
+
+# No space inside angle brackets (e.g. vector<int>)
+SpacesInAngles: false
+
+# Space before initializer list colon
+SpaceBeforeCtorInitializerColon: true
+
+# Space before inheritance colon
+SpaceBeforeInheritanceColon: true
+
+# Spaces around pointer qualifiers (const, volatile)
+SpaceAroundPointerQualifiers: Default
+
+# ─── Pointers ─────────────────────────────────────────────────────────────────
+
+# Attach pointer qualifier to the type (left side)
+PointerAlignment: Left
+
+# ─── Includes ─────────────────────────────────────────────────────────────────
+
+# Sort includes case-sensitively for stable ordering
+SortIncludes: CaseSensitive
+
+# Separate include groups with a blank line
+IncludeBlocks: Regroup
+
+# Regex to identify the main include of a translation unit
+IncludeIsMainRegex: '([-_](test|unittest))?$'
+
+# Merge multiple includes into one block or preserve separation
+MainIncludeChar: Quote
+
+# Group and prioritize includes: pch < system < project
+IncludeCategories:
+  - Regex: '.*pch\.hpp'
+    Priority: 1
+  - Regex: '^<.*'
+    Priority: 2
+  - Regex: '^".*'
+    Priority: 3
+
+# ─── Comments ─────────────────────────────────────────────────────────────────
+
+# Do not append '// namespace <name>' at closing brace
+FixNamespaceComments: false
+
+# Reflow long comments to fit within ColumnLimit
+# ReflowComments: IndentOnly
+
+# Number of spaces before trailing comments
+SpacesBeforeTrailingComments: 2
+
+# ─── Literals ─────────────────────────────────────────────────────────────────
+
+# Use C++11 braced list style (space inside braces)
+Cpp11BracedListStyle: false
+
+# Upgrade integer literal separators (e.g. 1000000 → 1'000'000)
+IntegerLiteralSeparator:
+  Decimal: 3
+  Hex: 4
+
+# ─── Cleanup ──────────────────────────────────────────────────────────────────
+
+# Remove redundant semicolons after closing braces
+RemoveSemicolon: true
+
+# Remove unnecessary parentheses
+RemoveParentheses: MultipleParentheses
+
+# Remove trailing whitespace on empty lines
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# Maximum consecutive empty lines to preserve
+MaxEmptyLinesToKeep: 2
+
+# Ensure files end with a newline
+InsertNewlineAtEOF: true
+
+# ─── Macros ───────────────────────────────────────────────────────────────────
+
+# No special macro block delimiters
+MacroBlockBegin: ''
+MacroBlockEnd: ''

@@ -1,5 +1,5 @@
-# # "cmake-lists": mongoose, "author": alessandromanzini
-# mongoose lib specific logic here.
+# # "cmake-lists": ash, "author": alessandromanzini
+# ash lib specific logic here.
 #
 #
 # ========================================
