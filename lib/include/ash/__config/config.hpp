@@ -2,7 +2,7 @@
 #define ASH_CONFIG_HPP
 
 
-namespace ash
+namespace ash::cfg
 {
    enum class PlatformType
    {
@@ -16,7 +16,7 @@ namespace ash
    };
 }
 
-namespace ash
+namespace ash::cfg
 {
    // +--------------------------------+
    // | DEBUG MODE                     |
@@ -25,6 +25,15 @@ namespace ash
    inline constexpr bool debug_mode = false;
 #else
    inline constexpr bool debug_mode = true;
+#endif
+
+  // +--------------------------------+
+  // | LIB LEVEL                      |
+  // +--------------------------------+
+#ifdef ASH_BUILD_LIB
+   inline constexpr bool lib_level = true;
+#else
+   inline constexpr bool lib_level = false;
 #endif
 
    // +--------------------------------+
