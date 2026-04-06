@@ -76,7 +76,7 @@ function( generate_umbrella_header )
     # ========================================
     get_ms_timestamp( T_END_MS )
     math( EXPR T_ELAPSED_MS "(${T_END_MS} - ${T_START_MS})" )
-    message( STATUS "Umbrella header generation done (${T_ELAPSED_MS}ms)" )
-    message( STATUS "Umbrella header written to: ${OUTPUT_FILE_PATH}" )
+    message( STATUS "Generating ${UMBRELLA_HEADER_FILE} umbrella header done (${T_ELAPSED_MS}ms)" )
+    message( STATUS "Umbrella header has been written to: ${OUTPUT_FILE_PATH}" )
     #
 endfunction()

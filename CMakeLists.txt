@@ -15,7 +15,7 @@ project( ash
 # append cmake module path, making sure cmake finds our custom modules (.cmake)
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" )
 #
-include(mark_non_standard_sources)
+include( mark_non_standard_sources )
 #
 #
 # ========================================
@@ -93,6 +93,6 @@ option( ASH_BUILD_TESTS "Build test executable" ON )
 add_subdirectory( "lib" )
 #
 # test executable
-if( ${ASH_BUILD_TESTS} )
+if( ${ASH_BUILD_TESTS} AND IS_DIRECTORY "${CMAKE_SOURCE_DIR}/test" )
     add_subdirectory( "test" )
 endif()
