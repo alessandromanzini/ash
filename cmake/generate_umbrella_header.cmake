@@ -71,9 +71,11 @@ function( generate_umbrella_header )
     cmake_path( APPEND ARG_OUTPUT_DIRECTORY ${UMBRELLA_HEADER_FILE} OUTPUT_VARIABLE OUTPUT_FILE_PATH )
     file( WRITE ${OUTPUT_FILE_PATH} ${CONTENT} )
     #
+    #
     # ========================================
     # LOG STATUS
     # ========================================
+    #
     get_ms_timestamp( T_END_MS )
     math( EXPR T_ELAPSED_MS "(${T_END_MS} - ${T_START_MS})" )
     message( STATUS "Generating ${UMBRELLA_HEADER_FILE} umbrella header done (${T_ELAPSED_MS}ms)" )
