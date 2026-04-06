@@ -22,6 +22,8 @@ include( mark_non_standard_sources )
 # GLOBAL CONFIGURATION
 # ========================================
 #
+message( STATUS "Configuring project: ${PROJECT_NAME}" )
+#
 # c++ standard configuration
 set( CMAKE_CXX_STANDARD 26 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
