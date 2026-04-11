@@ -1,4 +1,4 @@
-#include "ash/__module/dialog.hpp"
+#include "ash/module/monolith.hpp"
 
 #include <AppKit/AppKit.h>
 #import  <Cocoa/Cocoa.h>
@@ -13,7 +13,7 @@
 @end
 
 @implementation MG_ButtonHandler
-- (void)handleClick:(id)sender         { [NSApp stopModalWithCode:self.tag];        }
+- (void)handleClick:(id)sender { [NSApp stopModalWithCode:self.tag]; }
 - (void)windowWillClose:(NSNotification*)n { [NSApp stopModalWithCode:self.cancel_tag]; }
 @end
 
@@ -37,15 +37,15 @@ namespace ash
    // -------------------------------------------------------------------------
    // CONVERSIONS
    // -------------------------------------------------------------------------
-   [[nodiscard]] auto to_ns_text_alignment( DialogTextAlignment const alignment ) noexcept -> NSTextAlignment
+   [[nodiscard]] auto to_ns_text_alignment( style::TextAlignment const alignment ) noexcept -> NSTextAlignment
    {
       switch ( alignment )
       {
          default:
-         case DialogTextAlignment::left:      return NSTextAlignmentLeft;
-         case DialogTextAlignment::center:    return NSTextAlignmentCenter;
-         case DialogTextAlignment::right:     return NSTextAlignmentRight;
-         case DialogTextAlignment::justified: return NSTextAlignmentJustified;
+         case style::TextAlignment::left     : return NSTextAlignmentLeft;
+         case style::TextAlignment::center   : return NSTextAlignmentCenter;
+         case style::TextAlignment::right    : return NSTextAlignmentRight;
+         case style::TextAlignment::justified: return NSTextAlignmentJustified;
       }
    }
 
@@ -53,22 +53,19 @@ namespace ash
    // -------------------------------------------------------------------------
    // NS MAKERS
    // -------------------------------------------------------------------------
-   [[nodiscard]] auto make_font( CGFloat const font_size, DialogFontStyle const font_style ) noexcept -> NSFont*
+   [[nodiscard]] auto make_font( CGFloat const font_size, style::Font const font_style ) noexcept -> NSFont*
    {
       switch ( font_style )
       {
          default:
-         case DialogFontStyle::normal: return [NSFont systemFontOfSize:font_size];
-         case DialogFontStyle::bold:   return [NSFont boldSystemFontOfSize:font_size];
-         case DialogFontStyle::italic:
-            return [[NSFontManager sharedFontManager]
-               convertFont:[NSFont systemFontOfSize:font_size]
-               toHaveTrait:NSItalicFontMask];
+         case style::Font::normal: return [NSFont systemFontOfSize:font_size];
+         case style::Font::bold  : return [NSFont boldSystemFontOfSize:font_size];
+         case style::Font::italic: return [[NSFontManager sharedFontManager] convertFont:[NSFont systemFontOfSize:font_size] toHaveTrait:NSItalicFontMask];
       }
    }
 
 
-   [[nodiscard]] auto make_label( DialogTextField const& field ) noexcept -> NSTextField*
+   [[nodiscard]] auto make_label( Inscription const& field ) noexcept -> NSTextField*
    {
       NSTextField* const label = [[NSTextField alloc] initWithFrame:NSZeroRect];
       //
@@ -153,7 +150,7 @@ namespace ash
    // -------------------------------------------------------------------------
    // LAYOUT HELPERS
    // -------------------------------------------------------------------------
-   [[nodiscard]] auto make_text_stack( std::span<DialogTextField const> fields, CGFloat const inner_w ) noexcept -> std::pair<NSStackView*, CGFloat>
+   [[nodiscard]] auto make_text_stack( std::span<Inscription const> fields, CGFloat const inner_w ) noexcept -> std::pair<NSStackView*, CGFloat>
    {
       NSStackView* const stack = [NSStackView stackViewWithViews:@[]];
       stack.orientation        = NSUserInterfaceLayoutOrientationVertical;
@@ -162,7 +159,7 @@ namespace ash
       //
       CGFloat total_h = 0.;
       //
-      for ( DialogTextField const& field : fields )
+      for ( Inscription const& field : fields )
       {
          NSTextField* const label = make_label( field );
          //
@@ -185,7 +182,7 @@ namespace ash
    }
 
 
-   [[nodiscard]] auto make_button_row( std::span<char const* const> options, CGFloat const offset_w ) noexcept -> NSStackView*
+   [[nodiscard]] auto make_button_row( std::span<const Choice> choices, CGFloat const offset_w ) noexcept -> NSStackView*
    {
       NSStackView* const row = [NSStackView stackViewWithViews:@[]];
       row.orientation        = NSUserInterfaceLayoutOrientationHorizontal;
@@ -193,9 +190,9 @@ namespace ash
       row.alignment          = NSLayoutAttributeCenterY;
       row.spacing            = offset_w;
       //
-      for ( NSInteger i = 0; i < static_cast<NSInteger>( options.size( ) ); ++i )
+      for ( NSInteger i = 0; i < static_cast<NSInteger>( choices.size( ) ); ++i )
       {
-         NSButton* const btn = make_button( options[static_cast<size_t>( i )], i );
+         NSButton* const btn = make_button( choices[static_cast<size_t>( i )].label, i );
          btn.translatesAutoresizingMaskIntoConstraints = NO;
          [btn.widthAnchor constraintEqualToConstant:button_w].active = YES;
          [row addView:btn inGravity:NSStackViewGravityCenter];
@@ -206,29 +203,29 @@ namespace ash
 
 
    // -------------------------------------------------------------------------
-   // DIALOG
+   // MONOLITH
    // -------------------------------------------------------------------------
-   auto Dialog::display( ) noexcept -> std::string_view
+   auto Monolith::manifest( ) noexcept -> Choice
    {
       auto const max_w     = static_cast<CGFloat>( max_modal_width_ );
       auto const min_w     = static_cast<CGFloat>( min_width_.value_or( 0.f ) );
-      auto const buttons_w = static_cast<CGFloat>( options_count_ ) * button_w + static_cast<CGFloat>( options_count_ - 1U ) * spacing + padding * 2.;
+      auto const buttons_w = static_cast<CGFloat>( choices_count_ ) * button_w + static_cast<CGFloat>( choices_count_ - 1U ) * spacing + padding * 2.;
       auto const panel_w   = std::min( std::max( { min_w, buttons_w } ), max_w );
       auto const inner_w   = panel_w - padding * 2.;
       //
       // 1. text stack
-      auto const [text_stack, text_stack_h] = make_text_stack( std::span{ text_fields_.begin( ), text_field_count_ }, inner_w );
+      auto const [text_stack, text_stack_h] = make_text_stack( std::span{ inscriptions_.begin( ), inscriptions_count_ }, inner_w );
       //
       // 2. button row + key equivalents
-      NSStackView* const button_row = make_button_row( std::span{ options_.begin( ), options_count_ }, spacing );
+      NSStackView* const button_row = make_button_row( std::span{ choices_.begin( ), choices_count_ }, spacing );
       //
       NSArray* const buttons = button_row.views;
       //
-      [buttons[default_option_.value_or( 0U )] setKeyEquivalent:@"\r"];
+      [buttons[master_choice_.value_or( 0U )] setKeyEquivalent:@"\r"];
       //
-      if ( cancel_option_.has_value( ) )
+      if ( cancel_choice_.has_value( ) )
       {
-         [buttons[cancel_option_.value( )] setKeyEquivalent:@"\033"];
+         [buttons[cancel_choice_.value( )] setKeyEquivalent:@"\033"];
       }
       //
       // 3. wire button handlers
@@ -269,13 +266,13 @@ namespace ash
       ]];
       //
       // 6. delegate for X button
-      NSInteger const close_tag        = static_cast<NSInteger>( cancel_option_.value_or( options_count_ - 1U ) );
+      NSInteger const close_tag        = static_cast<NSInteger>( cancel_choice_.value_or( choices_count_ - 1U ) );
       MG_ButtonHandler* const delegate = handlers[0];
       delegate.cancel_tag              = close_tag;
       panel.delegate                   = delegate;
       //
       // 7. run modal
       auto const selection = static_cast<size_t>( [NSApp runModalForWindow:panel] );
-      return selection < options_count_ ? options_[selection] : "";
+      return selection < choices_count_ ? choices_[selection] : Choice{};
    }
 }

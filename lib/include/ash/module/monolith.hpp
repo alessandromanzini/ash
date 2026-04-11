@@ -1,139 +1,130 @@
-#ifndef ASH_DIALOG_HPP
-#define ASH_DIALOG_HPP
+#ifndef ASH_MONOLITH_HPP
+#define ASH_MONOLITH_HPP
 
 #include "ash/pch.hpp"
 
 
 namespace ash
 {
-   // +--------------------------------+
-   // | ENUMERATIONS                   |
-   // +--------------------------------+
-   enum class DialogFontStyle : uint8_t
+   // ───[[ STYLES ]]──────────────────────────────────────────────────────────────
+   namespace style
    {
-      normal,
-      bold,
-      italic
-   };
-
-   enum class DialogTextAlignment : uint8_t
-   {
-      left,
-      center,
-      right,
-      justified
-   };
-
-   // +--------------------------------+
-   // | DIALOG TEXT FIELD              |
-   // +--------------------------------+
-   struct DialogTextField
-   {
-      static constexpr float default_dialog_font_size = 16.f;
-
-      std::string_view    content;
-      float               font_size  = default_dialog_font_size;
-      DialogFontStyle     font_style = DialogFontStyle::normal;
-      DialogTextAlignment alignment  = DialogTextAlignment::left;
-   };
-
-   // +--------------------------------+
-   // | DIALOG                         |
-   // +--------------------------------+
-   class Dialog final
-   {
-   public:
-      enum class Style : uint8_t
+      enum class Font : uint8_t
       {
-         information,
-         warning,
-         critical
+         normal,
+         bold,
+         italic
       };
 
-      enum class OptionTag : uint8_t
+      enum class TextAlignment : uint8_t
+      {
+         left,
+         center,
+         right,
+         justified
+      };
+   }
+
+   // ───[[ INSCRIPTION ]]─────────────────────────────────────────────────────────
+   struct Inscription
+   {
+      static constexpr float default_inscription_font_size = 16.f;
+
+      std::string_view     content;
+      float                font_size  = default_inscription_font_size;
+      style::Font          font_style = style::Font::normal;
+      style::TextAlignment alignment  = style::TextAlignment::left;
+   };
+
+   // ───[[ CHOICE ]]──────────────────────────────────────────────────────────────
+   struct Choice
+   {
+      enum class Tag : uint8_t
       {
          none,
-         primary,
+         master,
          cancel
-      };
+      } tag             = Tag::none;
+      uint8_t     token = UINT8_MAX;
+      char const* label = nullptr;
+   };
 
-      explicit Dialog( std::string_view title ) noexcept;
-      ~Dialog( ) noexcept = default;
+   // ───[[ MONOLITH ]]────────────────────────────────────────────────────────────
+   class Monolith final
+   {
+   public:
+      explicit Monolith( std::string_view title ) noexcept;
+      ~Monolith( ) noexcept = default;
 
-      Dialog( Dialog const& )                        = delete;
-      Dialog( Dialog&& ) noexcept                    = default;
-      auto operator=( Dialog const& ) -> Dialog&     = delete;
-      auto operator=( Dialog&& ) noexcept -> Dialog& = delete;
-
-      // auto set_icon( DialogIcon const icon ) -> void;
+      Monolith( Monolith const& )                        = delete;
+      Monolith( Monolith&& ) noexcept                    = default;
+      auto operator=( Monolith const& ) -> Monolith&     = delete;
+      auto operator=( Monolith&& ) noexcept -> Monolith& = delete;
 
       auto set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self );
 
-      auto with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype( self );
-      auto with_option( this auto&& self, std::string_view option, OptionTag tag = OptionTag::none ) noexcept -> decltype( self );
+      auto with_inscription( this auto&& self, Inscription const& inscription ) noexcept -> decltype( self );
+      auto with_choice( this auto&& self, std::string_view label, uint8_t token, Choice::Tag tag = Choice::Tag::none ) noexcept
+        -> decltype( self );
 
-      auto display( ) noexcept -> std::string_view;
+      auto manifest( ) noexcept -> Choice;
 
    private:
       static constexpr float max_modal_width_ = 900.f;
 
       std::string_view const title_;
+      std::optional<float>   min_width_;
 
-      std::optional<float> min_width_;
+      static constexpr size_t                         max_accessories_count_ = 6U;
+      std::array<Inscription, max_accessories_count_> inscriptions_{}; // use inplace_vector
+      std::array<Choice, max_accessories_count_>      choices_{};
 
-      static constexpr size_t                             max_accessories_count_ = 6U;
-      std::array<DialogTextField, max_accessories_count_> text_fields_{}; // make in_place_vector
-      std::array<char const*, max_accessories_count_>     options_{};
-
-      uint8_t                text_field_count_ = 0U;
-      uint8_t                options_count_    = 0U;
-      std::optional<uint8_t> default_option_;
-      std::optional<uint8_t> cancel_option_;
+      uint8_t                inscriptions_count_ = 0U;
+      uint8_t                choices_count_      = 0U;
+      std::optional<uint8_t> master_choice_;
+      std::optional<uint8_t> cancel_choice_;
    };
 
-   inline Dialog::Dialog( std::string_view const title ) noexcept
+   inline Monolith::Monolith( std::string_view const title ) noexcept
       : title_{ title }
    { }
 
-   auto Dialog::set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self )
+   auto Monolith::set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self )
    {
       self.min_width_ = width;
       return self;
    }
 
-   auto Dialog::with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype( self )
+   auto Monolith::with_inscription( this auto&& self, Inscription const& inscription ) noexcept -> decltype( self )
    {
-      if ( self.text_field_count_ < self.max_accessories_count_ ) { self.text_fields_[self.text_field_count_++] = field_info; }
+      if ( self.inscriptions_count_ < self.max_accessories_count_ )
+      {
+         self.inscriptions_[self.inscriptions_count_++] = inscription;
+      }
       return self;
    }
 
-   auto Dialog::with_option( this auto&& self, std::string_view option, OptionTag const tag ) noexcept -> decltype( self )
+   auto Monolith::with_choice(
+     this auto&& self, std::string_view const label, uint8_t const token, Choice::Tag const tag ) noexcept -> decltype( self )
    {
-      if ( self.options_count_ >= self.max_accessories_count_ || option.empty( ) ) { return self; }
-      //
-      self.options_[self.options_count_] = option.data( );
-      //
-      switch ( tag ) {
-      case OptionTag::none: break;
-      //
-      case OptionTag::primary:
+      if ( self.choices_count_ >= self.max_accessories_count_ || label.empty( ) )
       {
-         self.default_option_ = self.options_count_;
-         break;
+         return self;
       }
       //
-      case OptionTag::cancel:
+      self.choices_[self.choices_count_++] = Choice{ .tag = tag, .token = token, .label = label.data( ) };
+      //
+      switch ( tag )
       {
-         self.cancel_option_ = self.options_count_;
-         break;
+         default:
+         case Choice::Tag::none  : break;
+         case Choice::Tag::master: self.master_choice_ = self.choices_count_ - 1U; break;
+         case Choice::Tag::cancel: self.cancel_choice_ = self.choices_count_ - 1U; break;
       }
-      }
-      //
-      ++self.options_count_;
       //
       return self;
    }
 }
 
 
-#endif //!ASH_DIALOG_HPP
+#endif //!ASH_MONOLITH_HPP

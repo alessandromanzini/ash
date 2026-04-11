@@ -6,10 +6,10 @@
 
 #include "ash/pch.hpp"
 
-#include "ash/__config/config.hpp"
-#include "ash/__config/export.hpp"
-#include "ash/__module/dialog.hpp"
-#include "ash/__module/library.hpp"
+#include "ash/config/config.hpp"
+#include "ash/config/export.hpp"
+#include "ash/module/monolith.hpp"
+#include "ash/module/severity.hpp"
 
 
 #endif //!ASH_HPP
