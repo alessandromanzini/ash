@@ -6,12 +6,12 @@
 
    #ifdef _MSC_VER
       #ifdef ASH_BUILD_LIB
-         #define ASH_EXPORT __declspec(dllexport)
+         #define ASH_EXPORT __declspec( dllexport )
       #else
-         #define ASH_EXPORT __declspec(dllimport)
+         #define ASH_EXPORT __declspec( dllimport )
       #endif
    #else
-      #define ASH_EXPORT __attribute__((__visibility__("default")))
+      #define ASH_EXPORT __attribute__( ( __visibility__( "default" ) ) )
    #endif
 
 #else
