@@ -82,8 +82,8 @@ namespace ash
       std::optional<float> min_width_;
 
       static constexpr size_t                             max_accessories_count_ = 6U;
-      std::array<DialogTextField, max_accessories_count_> text_fields_{ };  // make in_place_vector
-      std::array<char const*, max_accessories_count_>     options_{ };
+      std::array<DialogTextField, max_accessories_count_> text_fields_{}; // make in_place_vector
+      std::array<char const*, max_accessories_count_>     options_{};
 
       uint8_t                text_field_count_ = 0U;
       uint8_t                options_count_    = 0U;
@@ -91,11 +91,9 @@ namespace ash
       std::optional<uint8_t> cancel_option_;
    };
 
-
    inline Dialog::Dialog( std::string_view const title ) noexcept
-       : title_{ title }
+      : title_{ title }
    { }
-
 
    auto Dialog::set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self )
    {
@@ -103,48 +101,39 @@ namespace ash
       return self;
    }
 
-
    auto Dialog::with_text_field( this auto&& self, DialogTextField const& field_info ) noexcept -> decltype( self )
    {
-      if ( self.text_field_count_ < self.max_accessories_count_ )
-      {
-         self.text_fields_[self.text_field_count_++] = field_info;
-      }
+      if ( self.text_field_count_ < self.max_accessories_count_ ) { self.text_fields_[self.text_field_count_++] = field_info; }
       return self;
    }
 
-
    auto Dialog::with_option( this auto&& self, std::string_view option, OptionTag const tag ) noexcept -> decltype( self )
    {
-      if ( self.options_count_ >= self.max_accessories_count_ || option.empty( ) )
-      {
-         return self;
-      }
+      if ( self.options_count_ >= self.max_accessories_count_ || option.empty( ) ) { return self; }
       //
       self.options_[self.options_count_] = option.data( );
       //
-      switch ( tag )
+      switch ( tag ) {
+      case OptionTag::none: break;
+      //
+      case OptionTag::primary:
       {
-         case OptionTag::none: break;
-         //
-         case OptionTag::primary:
-         {
-            self.default_option_ = self.options_count_;
-            break;
-         }
-         //
-         case OptionTag::cancel:
-         {
-            self.cancel_option_ = self.options_count_;
-            break;
-         }
+         self.default_option_ = self.options_count_;
+         break;
+      }
+      //
+      case OptionTag::cancel:
+      {
+         self.cancel_option_ = self.options_count_;
+         break;
+      }
       }
       //
       ++self.options_count_;
       //
       return self;
    }
-}  // namespace ash
+}
 
 
-#endif  //! ASH_DIALOG_HPP
+#endif //!ASH_DIALOG_HPP
