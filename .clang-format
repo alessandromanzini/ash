@@ -93,7 +93,7 @@ BraceWrapping:
   AfterCaseLabel: true
   AfterClass: true
   AfterControlStatement: Always
-  AfterEnum: true
+  AfterEnum: false
   AfterFunction: true
   AfterNamespace: true
   AfterObjCDeclaration: true
@@ -118,7 +118,17 @@ InsertBraces: true
 ColumnLimit: 130
 
 # Break all arguments to a new line when they don't fit after open bracket
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: true
+BreakAfterOpenBracketBracedList: true
+BreakAfterOpenBracketFunction: true
+BreakAfterOpenBracketIf: false
+BreakAfterOpenBracketLoop: false
+BreakAfterOpenBracketSwitch: false
+BreakBeforeCloseBracketBracedList: true
+BreakBeforeCloseBracketFunction: false
+BreakBeforeCloseBracketIf: false
+BreakBeforeCloseBracketLoop: false
+BreakBeforeCloseBracketSwitch: false
 
 # Break after return type definition
 AlwaysBreakAfterDefinitionReturnType: None
@@ -240,7 +250,7 @@ AlignEscapedNewlines: LeftWithLastLine
 AllowBreakBeforeNoexceptSpecifier: Never
 
 # Allow inlining of short blocks
-AllowShortBlocksOnASingleLine: Always
+AllowShortBlocksOnASingleLine: Empty
 
 # Allow short case labels and expressions to stay on a single line
 AllowShortCaseLabelsOnASingleLine: true
