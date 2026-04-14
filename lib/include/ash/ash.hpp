@@ -9,7 +9,8 @@
 #include "ash/config/config.hpp"
 #include "ash/config/export.hpp"
 #include "ash/module/monolith.hpp"
-#include "ash/module/severity.hpp"
+#include "ash/module/signal.hpp"
+#include "ash/module/theme.hpp"
 
 
 #endif //!ASH_HPP

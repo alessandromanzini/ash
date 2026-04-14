@@ -29,12 +29,12 @@ function( generate_umbrella_header )
     string( APPEND HEADER_GUARD _HPP )
     set( UMBRELLA_HEADER_FILE ${ARG_UMBRELLA_HEADER_NAME}.hpp )
     #
-    # include guards
+    # Include guards.
     set( CONTENT "// UMBRELLA HEADER: auto-generated in cmake from globbed headers...\n\n" )
     string( APPEND CONTENT "#ifndef ${HEADER_GUARD}\n" )
     string( APPEND CONTENT "#define ${HEADER_GUARD}\n\n\n" )
     #
-    # glob, exclude umbrella, sort
+    # Glob, exclude umbrella, sort.
     file( GLOB_RECURSE INCLUDE_FILE_PATHS "${ARG_INCLUDE_DIRECTORY}/*.hpp" )
     list( FILTER INCLUDE_FILE_PATHS EXCLUDE REGEX ".*${UMBRELLA_HEADER_FILE}$" )
     foreach( REGEX ${ARG_EXCEPTION_REGEX} )
@@ -42,17 +42,17 @@ function( generate_umbrella_header )
     endforeach()
     list( SORT INCLUDE_FILE_PATHS COMPARE NATURAL ORDER ASCENDING )
     #
-    # define appen_header macro
+    # Define appen_header macro.
     macro( append_header PATH )
         file( RELATIVE_PATH REL_PATH ${ARG_INCLUDE_DIRECTORY} ${PATH} )
         string( APPEND CONTENT "#include \"${REL_PATH}\"\n" )
     endmacro()
     #
-    # extract pch and ...
+    # Extract pch and ...
     set( PCH_FILE_PATHS ${INCLUDE_FILE_PATHS} )
     list( FILTER PCH_FILE_PATHS INCLUDE REGEX ".*/pch\\.hpp$" )
     #
-    # ... if any was found, exclude from list and append in front
+    # ... if any was found, exclude from list and append in front.
     list( LENGTH PCH_FILE_PATHS PCH_COUNT )
     if( PCH_COUNT GREATER 0 )
         list( FILTER INCLUDE_FILE_PATHS EXCLUDE REGEX ".*/pch\\.hpp$" )
@@ -61,7 +61,7 @@ function( generate_umbrella_header )
         string( APPEND CONTENT "\n" )
     endif()
     #
-    # append remaining headers
+    # Append remaining headers.
     foreach( INCLUDE_FILE_PATH ${INCLUDE_FILE_PATHS} )
         append_header( ${INCLUDE_FILE_PATH} )
     endforeach()

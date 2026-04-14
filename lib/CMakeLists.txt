@@ -1,5 +1,5 @@
 # # "cmake-lists": ash, "author": alessandromanzini
-# ash lib specific logic here.
+# Ash lib specific logic here.
 #
 #
 # ========================================
@@ -23,11 +23,11 @@ set( SHARED_TARGET "${PROJECT_NAME}_shared" )
 set( SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src" )
 set( INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" )
 #
-# the OBJECT lib target serves as the single compile source for the next static/shared libs.
-# we compile the objs ones to the allow users to link to either without extra overhead.
+# The OBJECT lib target serves as the single compile source for the next static/shared libs.
+# We compile the objs ones to the allow users to link to either without extra overhead.
 add_library( ${OBJECT_TARGET} OBJECT )
 #
-# glob shared and platform source and append them to the OBJECT target.
+# Glob shared and platform source and append them to the OBJECT target.
 file( GLOB_RECURSE TARGET_SOURCES "${SRC_DIR}/shared/*.cpp" )
 #
 if( APPLE )
@@ -44,7 +44,7 @@ list( APPEND TARGET_SOURCES ${CBRIDGE_SRC} )
 #
 target_sources( ${OBJECT_TARGET} PRIVATE ${TARGET_SOURCES} )
 #
-# set OBJECT target compile options and directories.
+# Set OBJECT target compile options and directories.
 target_compile_options_strict( ${OBJECT_TARGET} )
 target_compile_options( ${OBJECT_TARGET} PRIVATE -g3 )
 #
@@ -52,10 +52,10 @@ target_include_directories( ${OBJECT_TARGET}
                             PUBLIC $<BUILD_INTERFACE:${INC_DIR}> $<INSTALL_INTERFACE:include>
                             PRIVATE ${SRC_DIR} )
 #
-# set OBJECT target precompile headers
+# Set OBJECT target precompile headers.
 target_precompile_headers( ${OBJECT_TARGET} PRIVATE "${INC_DIR}/${PROJECT_NAME}/pch.hpp" )
 #
-# finally add distribution targets
+# Finally add distribution targets.
 add_library_distribution_targets( ${STATIC_TARGET} ${SHARED_TARGET} ${OBJECT_TARGET} ${PROJECT_NAME} )
 #
 #

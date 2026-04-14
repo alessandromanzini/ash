@@ -35,7 +35,7 @@ function( target_compile_options_strict TARGET_NAME )
                 /Zc:preprocessor        # conforming preprocessor
         )
         #
-        # disable exceptions engine-wide
+        # Disable exceptions engine-wide.
         target_compile_definitions( ${TARGET_NAME} PRIVATE _HAS_EXCEPTIONS=0 )
         #
     else() # GCC / Clang
