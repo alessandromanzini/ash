@@ -9,19 +9,24 @@
 
 namespace ash::ui
 {
-   constexpr CGFloat kButtonRadius         = 6.0;
-   constexpr CGFloat kPadding              = 24.0;
-   constexpr CGFloat kTitleHeightOffset    = 18.0;
-   constexpr CGFloat kSignalIconSize     = 11.0;
-   constexpr CGFloat kSignalFontSize     = 9.0;
-   constexpr CGFloat kSignalBorderWidth  = 0.5;
-   constexpr CGFloat kSignalCornerRadius = 4.0;
-   constexpr CGFloat kTitleSpacing         = 10.0;
-   constexpr CGFloat kTitleFontSize        = 13.0;
-   constexpr CGFloat kButtonHeight         = 32.0;
-   constexpr CGFloat kButtonWidth          = 120.0;
-   constexpr CGFloat kSpacing              = 10.0;
-   constexpr CGFloat kContentSpacing       = 16.0;
+   constexpr CGFloat kPadding             = 24.0;
+   constexpr CGFloat kTitleHeightOffset   = 18.0;
+   constexpr CGFloat kSignalIconSize      = 11.0;
+   constexpr CGFloat kSignalFontSize      = 9.0;
+   constexpr CGFloat kSignalBorderWidth   = 0.5;
+   constexpr CGFloat kSignalRadius        = 4.0;
+   constexpr CGFloat kTitleSpacing        = 10.0;
+   constexpr CGFloat kTitleFontSize       = 13.0;
+   constexpr CGFloat kToolTipFontSize     = 11.0;
+   constexpr CGFloat kToolTipIconWidth    = 23.0;
+   constexpr CGFloat kToolTipIconHeight   = 16.0;
+   constexpr CGFloat kToolTipPaddingX     = 20.0;
+   constexpr CGFloat kToolTipPaddingY     = 12.0;
+   constexpr CGFloat kButtonRadius        = 6.0;
+   constexpr CGFloat kButtonHeight        = 32.0;
+   constexpr CGFloat kButtonWidth         = 120.0;
+   constexpr CGFloat kSpacing             = 10.0;
+   constexpr CGFloat kContentSpacing      = 16.0;
 }
 
 #pragma mark - Objective-C Runtime Helpers
@@ -62,15 +67,15 @@ namespace ash::ui
       return [super performKeyEquivalent:event];
    }
    //
-   NSNumber* tagNumber = objc_getAssociatedObject( self, "master_tag" );
-   if ( !tagNumber )
+   NSNumber* tag_number = objc_getAssociatedObject( self, "master_tag" );
+   if ( !tag_number )
    {
       return [super performKeyEquivalent:event];
    }
    //
-   NSInteger targetTag   = tagNumber.integerValue;
+   NSInteger target_tag  = tag_number.integerValue;
    NSMutableArray* stack = [NSMutableArray arrayWithObject:self.contentView];
-   while (stack.count)
+   while ( stack.count )
    {
       NSView* v = stack.lastObject;
       [stack removeLastObject];
@@ -78,7 +83,7 @@ namespace ash::ui
       if ( [v isKindOfClass:[NSButton class]] )
       {
          NSButton* b = static_cast<NSButton*>( v );
-         if ( b.tag == targetTag )
+         if ( b.tag == target_tag )
          {
             [b performClick:nil];
             return YES;
@@ -142,6 +147,127 @@ namespace ash::ui
    r.origin.y    = 0.0;
    r.size.height = rect.size.height;
    return r;
+}
+
+@end
+
+@interface MG_TooltipPopover : NSPopover
+@property (nonatomic, assign) NSControl* owner;
+@end
+
+@implementation MG_TooltipPopover
+
+- (void)mouseDown:(NSEvent*)event
+{
+   if ( !self.owner ) { return; }
+   [self.owner mouseDown:event];
+}
+
+@end
+
+@interface MG_HoverButton : NSButton
+@property (nonatomic, strong) NSColor* tint;
+@property (nonatomic, strong) NSString* clipboard_text;
+@property (nonatomic, strong) NSPopover* tooltip_popover;
+@property (nonatomic, strong) NSTextField* tooltip_label;
+@property (nonatomic, assign) BOOL suppress_tooltip;
+@end
+
+@implementation MG_HoverButton
+
+- (void)updateTrackingAreas
+{
+   [super updateTrackingAreas];
+   for ( NSTrackingArea* a in self.trackingAreas ) { [self removeTrackingArea:a]; }
+   //
+   NSTrackingArea* area = [[NSTrackingArea alloc]
+      initWithRect:self.bounds
+           options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
+             owner:self
+          userInfo:nil];
+   [self addTrackingArea:area];
+}
+
+- (void) showTooltip
+{
+   MG_TooltipPopover* popover = [[MG_TooltipPopover alloc] init];
+   popover.owner              = self;
+   //
+   NSViewController* vc         = [[NSViewController alloc] init];
+   self.tooltip_label           = [NSTextField labelWithString:@"Copy log to clipboard [⌘C]"];
+   self.tooltip_label.font      = [NSFont systemFontOfSize:ash::ui::kToolTipFontSize];
+   self.tooltip_label.alignment = NSTextAlignmentCenter;
+   self.tooltip_label.translatesAutoresizingMaskIntoConstraints = NO;
+   //
+   NSView* view = [[NSView alloc] initWithFrame:NSZeroRect];
+   [view addSubview:self.tooltip_label];
+   [NSLayoutConstraint activateConstraints:@[
+      [self.tooltip_label.topAnchor      constraintEqualToAnchor:view.topAnchor      constant:ash::ui::kToolTipPaddingY],
+      [self.tooltip_label.bottomAnchor   constraintEqualToAnchor:view.bottomAnchor   constant:-ash::ui::kToolTipPaddingY],
+      [self.tooltip_label.leadingAnchor  constraintEqualToAnchor:view.leadingAnchor  constant:ash::ui::kToolTipPaddingX],
+      [self.tooltip_label.trailingAnchor constraintEqualToAnchor:view.trailingAnchor constant:-ash::ui::kToolTipPaddingX]
+   ]];
+   //
+   vc.view                       = view;
+   popover.contentViewController = vc;
+   popover.behavior              = NSPopoverBehaviorApplicationDefined;
+   popover.animates              = NO;
+   //
+   self.tooltip_popover = popover;
+   [popover showRelativeToRect:self.bounds ofView:self preferredEdge:NSRectEdgeMinY];
+}
+
+- (void)mouseEntered:(NSEvent*)event
+{
+   self.layer.backgroundColor = [self.tint colorWithAlphaComponent:0.1].CGColor;
+   //
+   if ( self.tooltip_popover || self.suppress_tooltip ) { return; }
+   [self showTooltip];
+}
+
+- (void)mouseExited:(NSEvent*)event
+{
+   self.layer.backgroundColor = [NSColor clearColor].CGColor;
+   [self.tooltip_popover close];
+   self.tooltip_popover = nil;
+}
+
+- (void)mouseDown:(NSEvent*)event
+{
+   [super mouseDown:event];
+   //
+   if ( !self.tooltip_popover || !self.tooltip_label ) { return; }
+   //
+   NSImage* checkmark = [NSImage imageWithSystemSymbolName:@"checkmark.circle.fill" accessibilityDescription:nil];
+   NSImageSymbolConfiguration* cfg = [NSImageSymbolConfiguration configurationWithPointSize:ash::ui::kToolTipFontSize
+                                                    weight:NSFontWeightMedium
+                                                     scale:NSImageSymbolScaleSmall];
+   checkmark = [checkmark imageWithSymbolConfiguration:cfg];
+   //
+   NSTextAttachment* attach = [[NSTextAttachment alloc] init];
+   attach.image = checkmark;
+   //
+   NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
+   style.alignment = NSTextAlignmentCenter;
+   style.lineBreakMode = NSLineBreakByClipping;
+   //
+   NSAttributedString* icon = [NSAttributedString attributedStringWithAttachment:attach];
+   NSMutableAttributedString* str = [[NSMutableAttributedString alloc] initWithString:@"Copied "
+      attributes:@{
+         NSParagraphStyleAttributeName: style,
+         NSFontAttributeName: self.tooltip_label.font
+      }];
+   [str appendAttributedString:icon];
+   //
+   self.tooltip_label.attributedStringValue = str;
+}
+
+- (void)copyToClipboard:(id)sender
+{
+   if ( !self.clipboard_text ) { return; }
+   NSPasteboard* pb = [NSPasteboard generalPasteboard];
+   [pb clearContents];
+   [pb setString:self.clipboard_text forType:NSPasteboardTypeString];
 }
 
 @end
@@ -272,7 +398,7 @@ namespace ash::ui
       label.bezeled               = NO;
       label.alignment             = NSTextAlignmentCenter;
       label.wantsLayer            = YES;
-      label.layer.cornerRadius    = kSignalCornerRadius;
+      label.layer.cornerRadius    = kSignalRadius;
       label.layer.borderWidth     = kSignalBorderWidth;
       label.layer.borderColor     = ui::to_color( sig ).CGColor;
       label.layer.backgroundColor = [ui::to_color( sig ) colorWithAlphaComponent:0.1].CGColor;
@@ -377,7 +503,9 @@ namespace ash::ui
 
 namespace ash::ui
 {
-   [[nodiscard]] auto make_panel( char const* const title, CGFloat const width, CGFloat const height, Signal const sig ) noexcept -> MG_Panel*
+   [[nodiscard]] auto make_panel(
+       char const* const title, CGFloat const width, CGFloat const height, Signal const sig,
+       NSMutableString* combined_text_content ) noexcept -> MG_Panel*
    {
       [NSApplication sharedApplication];
       [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
@@ -425,12 +553,57 @@ namespace ash::ui
          titleText.translatesAutoresizingMaskIntoConstraints = NO;
          //
          [title_stack addArrangedSubview:titleText];
+         //
          [titlebar_view addSubview:title_stack];
          //
          NSButton* miniaturize_button = [panel standardWindowButton:NSWindowMiniaturizeButton];
          [NSLayoutConstraint activateConstraints:@[
              [title_stack.leadingAnchor constraintEqualToAnchor:miniaturize_button.trailingAnchor constant:kContentSpacing],
              [title_stack.centerYAnchor constraintEqualToAnchor:miniaturize_button.centerYAnchor]
+         ]];
+      }
+      //
+      {
+         // COPY BUTTON
+         NSImage* copy_icon = [NSImage imageWithSystemSymbolName:@"doc.on.doc" accessibilityDescription:@"Copy"];
+         NSImageSymbolConfiguration* cfg =
+             [NSImageSymbolConfiguration configurationWithPointSize:kSignalIconSize
+                                                             weight:NSFontWeightRegular
+                                                              scale:NSImageSymbolScaleSmall];
+         //
+         copy_icon = [copy_icon imageWithSymbolConfiguration:cfg];
+         [copy_icon setTemplate:YES];
+         //
+         MG_HoverButton* copy_button  = [[MG_HoverButton alloc] initWithFrame:NSZeroRect];
+         copy_button.image            = copy_icon;
+         copy_button.tint             = ui::to_color( sig );
+         copy_button.bordered         = NO;
+         copy_button.translatesAutoresizingMaskIntoConstraints = NO;
+         //
+         [copy_button.image setTemplate:YES];
+         [copy_button.widthAnchor constraintEqualToConstant:kToolTipIconWidth].active = YES;
+         [copy_button.heightAnchor constraintEqualToConstant:kToolTipIconHeight].active = YES;
+         copy_button.contentTintColor = ui::to_color( sig );
+         //
+         copy_button.wantsLayer         = YES;
+         copy_button.layer.cornerRadius = kButtonRadius;
+         copy_button.layer.borderWidth  = kSignalBorderWidth;
+         copy_button.layer.borderColor  = ui::to_color( sig ).CGColor;
+         //
+         copy_button.keyEquivalent             = @"c";
+         copy_button.keyEquivalentModifierMask = NSEventModifierFlagCommand;
+         //
+         copy_button.imagePosition = NSImageOnly;
+         //
+         copy_button.target         = copy_button;
+         copy_button.action         = @selector(copyToClipboard:);
+         copy_button.clipboard_text = combined_text_content;
+         //
+         [titlebar_view addSubview:copy_button];
+         //
+         [NSLayoutConstraint activateConstraints:@[
+            [copy_button.trailingAnchor constraintEqualToAnchor:titlebar_view.trailingAnchor constant:-kPadding],
+            [copy_button.centerYAnchor constraintEqualToAnchor:title_stack.centerYAnchor]
          ]];
       }
       //
@@ -493,8 +666,18 @@ namespace ash
       content.spacing      = kContentSpacing;
       content.edgeInsets   = NSEdgeInsetsMake( kPadding, kPadding, kPadding, kPadding );
       //
+      NSMutableString* combined_text_content = [NSMutableString string];
+      for ( const auto& f : std::span{ inscriptions_.begin(), inscriptions_count_ } )
+      {
+         if ( !f.content.empty( ) )
+         {
+            [combined_text_content appendString:[NSString stringWithUTF8String:f.content.data( )]];
+            [combined_text_content appendString:@"\n"];
+         }
+      }
+      //
       const CGFloat panel_h = kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0;
-      MG_Panel* panel       = make_panel( title_.data( ), panel_w, panel_h, signal_ );
+      MG_Panel* panel       = make_panel( title_.data( ), panel_w, panel_h, signal_, combined_text_content );
       //
       [panel.contentView addSubview:content];
       //
@@ -518,8 +701,10 @@ namespace ash
       [panel makeKeyWindow];
       //
       [panel center];
-      [panel makeFirstResponder:panel.contentView];
+      [panel makeKeyAndOrderFront:nil];
+      [NSApp activateIgnoringOtherApps:YES];
       //
+      [panel makeKeyAndOrderFront:nil];
       const auto selection = static_cast<size_t>( [NSApp runModalForWindow:panel] );
       return selection < choices_count_ ? choices_[selection] : Choice{ };
    }
