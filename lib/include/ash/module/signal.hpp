@@ -10,8 +10,9 @@ namespace ash
    enum class Signal : uint8_t {
       trace = 0U, // Signal for granular execution detail.
       info,       // Signal for general information.
-      caution,    // Signal for degraded behavior, system still operational.
-      critical,   // Signal for operation failed, system recovery may be possible.
+      debug,      // Signal for debugging utility.
+      warning,    // Signal for degraded behavior, system still operational.
+      error,      // Signal for operation failed, system recovery may be possible.
       fatal       // Signal for catastrophic failure, continuation is UB.
    };
 
@@ -21,12 +22,13 @@ namespace ash
       {
          switch ( sig )
          {
-            case Signal::trace   : return uppercase ? "TRACE" : "trace";
-            case Signal::info    : return uppercase ? "INFO" : "info";
-            case Signal::caution : return uppercase ? "CAUTION" : "caution";
-            case Signal::critical: return uppercase ? "CRITICAL" : "critical";
-            case Signal::fatal   : return uppercase ? "FATAL" : "fatal";
-            default              : std::unreachable( );
+            case Signal::trace  : return uppercase ? "TRACE" : "trace";
+            case Signal::info   : return uppercase ? "INFO" : "info";
+            case Signal::debug  : return uppercase ? "DEBUG" : "debug";
+            case Signal::warning: return uppercase ? "WARNING" : "warning";
+            case Signal::error  : return uppercase ? "ERROR" : "error";
+            case Signal::fatal  : return uppercase ? "FATAL" : "fatal";
+            default             : std::unreachable( );
          }
       }
 
@@ -34,12 +36,13 @@ namespace ash
       {
          switch ( sig )
          {
-            case Signal::trace   : return uppercase ? "TRC" : "trc";
-            case Signal::info    : return uppercase ? "INF" : "inf";
-            case Signal::caution : return uppercase ? "CTN" : "ctn";
-            case Signal::critical: return uppercase ? "CRT" : "crt";
-            case Signal::fatal   : return uppercase ? "FTL" : "ftl";
-            default              : std::unreachable( );
+            case Signal::trace  : return uppercase ? "TRC" : "trc";
+            case Signal::info   : return uppercase ? "INF" : "inf";
+            case Signal::debug  : return uppercase ? "DBG" : "dbg";
+            case Signal::warning: return uppercase ? "WRN" : "wrn";
+            case Signal::error  : return uppercase ? "ERR" : "err";
+            case Signal::fatal  : return uppercase ? "FTL" : "ftl";
+            default             : std::unreachable( );
          }
       }
    }
