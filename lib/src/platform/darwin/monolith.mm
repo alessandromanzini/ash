@@ -1,9 +1,11 @@
-#include "ash/module/monolith.hpp"
-#include "ash/module/theme.hpp"
+#include "ash/module/modal.hpp"
 
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 #import <objc/runtime.h>
+
+#include "ash/config/theme.hpp"
+
 
 #pragma mark - UI Constants
 
@@ -352,7 +354,7 @@ namespace ash::ui
       return img;
    }
 
-   [[nodiscard]] auto make_label( const Inscription& f ) noexcept -> NSTextField*
+   [[nodiscard]] auto make_label( const Remark& remark ) noexcept -> NSTextField*
    {
       NSTextField* label = [[NSTextField alloc] initWithFrame:NSZeroRect];
       //
@@ -363,13 +365,13 @@ namespace ash::ui
       label.lineBreakMode   = NSLineBreakByWordWrapping;
       //
       NSMutableParagraphStyle* p = [[NSMutableParagraphStyle alloc] init];
-      p.alignment                = to_alignment( f.alignment );
+      p.alignment                = to_alignment( remark.alignment );
       //
       label.attributedStringValue =
          [[NSAttributedString alloc]
-            initWithString:[NSString stringWithUTF8String:f.content.data( )]
+            initWithString:[NSString stringWithUTF8String:remark.content.data( )]
             attributes:@{
-               NSFontAttributeName: make_font( static_cast<CGFloat>( f.font_size ), f.font_style ),
+               NSFontAttributeName: make_font( static_cast<CGFloat>( remark.font_size ), remark.font_style ),
                NSParagraphStyleAttributeName: p
             }];
       //
@@ -451,7 +453,7 @@ namespace ash::ui
 
 namespace ash::ui
 {
-   [[nodiscard]] auto make_text_stack( std::span<const Inscription> fields, CGFloat const width ) noexcept -> std::pair<NSStackView*, CGFloat>
+   [[nodiscard]] auto make_text_stack( std::span<const Remark> fields, CGFloat const width ) noexcept -> std::pair<NSStackView*, CGFloat>
    {
       NSStackView* stack = [NSStackView stackViewWithViews:@[]];
       stack.orientation  = NSUserInterfaceLayoutOrientationVertical;
@@ -617,11 +619,11 @@ namespace ash::ui
    }
 }
 
-#pragma mark - Monolith
+#pragma mark - Modal
 
 namespace ash
 {
-   auto Monolith::manifest( ) noexcept -> Choice
+   auto Modal::raise( ) noexcept -> Choice
    {
       using namespace ui;
       //
@@ -639,7 +641,7 @@ namespace ash
       const CGFloat panel_w = std::min( std::max( min_w, buttons_w ), max_w );
       const CGFloat inner_w = panel_w - kPadding * 2.0;
       //
-      const auto [text_stack, text_h] = make_text_stack( std::span{ inscriptions_.begin( ), inscriptions_count_ }, inner_w );
+      const auto [text_stack, text_h] = make_text_stack( std::span{ remarks_.begin( ), remarks_count_ }, inner_w );
       //
       NSStackView* buttons = make_button_row( std::span{ choices_.begin( ), choices_count_ } );
       NSArray*     btn_view = buttons.views;
@@ -668,7 +670,7 @@ namespace ash
       content.edgeInsets   = NSEdgeInsetsMake( kPadding, kPadding, kPadding, kPadding );
       //
       NSMutableString* combined_text_content = [NSMutableString string];
-      for ( const auto& f : std::span{ inscriptions_.begin( ), inscriptions_count_ } )
+      for ( const auto& f : std::span{ remarks_.begin( ), remarks_count_ } )
       {
          if ( !f.content.empty( ) )
          {
