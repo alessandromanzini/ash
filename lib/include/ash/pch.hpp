@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <print>
 #include <source_location>
 #include <span>

@@ -8,9 +8,11 @@
 
 #include "ash/config/config.hpp"
 #include "ash/config/export.hpp"
-#include "ash/module/monolith.hpp"
-#include "ash/module/signal.hpp"
-#include "ash/module/theme.hpp"
+#include "ash/config/signal.hpp"
+#include "ash/config/theme.hpp"
+#include "ash/module/async_logger.hpp"
+#include "ash/module/logger.hpp"
+#include "ash/module/modal.hpp"
 
 
 #endif //!ASH_HPP

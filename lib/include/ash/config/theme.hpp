@@ -3,7 +3,7 @@
 
 #include "ash/pch.hpp"
 
-#include "ash/module/theme.hpp"
+#include "ash/config/signal.hpp"
 
 
 namespace ash::theme
