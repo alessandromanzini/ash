@@ -305,8 +305,9 @@ namespace ash::ui
          default:
          case Signal::trace   : return @"info.bubble";
          case Signal::info    : return @"info.circle.fill";
-         case Signal::caution : return @"exclamationmark.triangle.fill";
-         case Signal::critical: return @"xmark.octagon.fill";
+         case Signal::debug   : return @"ant.fill";
+         case Signal::warning : return @"exclamationmark.triangle.fill";
+         case Signal::error   : return @"xmark.octagon.fill";
          case Signal::fatal   : return @"bolt.trianglebadge.exclamationmark.fill";
       }
    }
