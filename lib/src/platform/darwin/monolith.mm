@@ -181,10 +181,10 @@ namespace ash::ui
    for ( NSTrackingArea* a in self.trackingAreas ) { [self removeTrackingArea:a]; }
    //
    NSTrackingArea* area = [[NSTrackingArea alloc]
-      initWithRect:self.bounds
-           options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
-             owner:self
-          userInfo:nil];
+   initWithRect:self.bounds
+        options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+          owner:self
+       userInfo:nil];
    [self addTrackingArea:area];
 }
 
@@ -507,10 +507,6 @@ namespace ash::ui
        char const* const title, CGFloat const width, CGFloat const height, Signal const sig,
        NSMutableString* combined_text_content ) noexcept -> MG_Panel*
    {
-      [NSApplication sharedApplication];
-      [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
-      [NSApp activateIgnoringOtherApps:YES];
-      //
       MG_Panel* const panel = [[MG_Panel alloc]
          initWithContentRect:NSMakeRect( 0.0, 0.0, width, height )
          styleMask:NSWindowStyleMaskTitled            |
@@ -628,12 +624,16 @@ namespace ash
    {
       using namespace ui;
       //
+      [NSApplication sharedApplication];
+      [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+      [NSApp activateIgnoringOtherApps:YES];
+      //
       const auto max_w = static_cast<CGFloat>( max_modal_width_ );
       const auto min_w = static_cast<CGFloat>( min_width_.value_or( 0.0f ) );
       //
       const CGFloat buttons_w =
-         static_cast<CGFloat>(choices_count_) * kButtonWidth +
-         static_cast<CGFloat>(choices_count_ - 1U) * kSpacing + kPadding * 2.0;
+         static_cast<CGFloat>( choices_count_ ) * kButtonWidth +
+         static_cast<CGFloat>( choices_count_ - 1U ) * kSpacing + kPadding * 2.0;
       //
       const CGFloat panel_w = std::min( std::max( min_w, buttons_w ), max_w );
       const CGFloat inner_w = panel_w - kPadding * 2.0;
@@ -641,22 +641,22 @@ namespace ash
       const auto [text_stack, text_h] = make_text_stack( std::span{ inscriptions_.begin( ), inscriptions_count_ }, inner_w );
       //
       NSStackView* buttons = make_button_row( std::span{ choices_.begin( ), choices_count_ } );
-      NSArray* btn_view    = buttons.views;
+      NSArray*     btn_view = buttons.views;
       //
       NSButton* master             = btn_view[master_choice_.value_or( 0U )];
       master.layer.backgroundColor = to_color( signal_ ).CGColor;
       master.layer.cornerRadius    = kButtonRadius;
       //
-      if (cancel_choice_) { [btn_view[cancel_choice_.value( )] setKeyEquivalent:@"\033"]; }
+      if ( cancel_choice_ ) { [btn_view[cancel_choice_.value( )] setKeyEquivalent:@"\033"]; }
       //
       NSMutableArray* handlers = [NSMutableArray array];
       //
-      for (NSButton* b in btn_view)
+      for ( NSButton* b in btn_view )
       {
          MG_ButtonHandler* h = [[MG_ButtonHandler alloc] init];
          h.tag               = b.tag;
          b.target            = h;
-         b.action            = @selector(handleClick:);
+         b.action            = @selector( handleClick: );
          [handlers addObject:h];
       }
       //
@@ -667,7 +667,7 @@ namespace ash
       content.edgeInsets   = NSEdgeInsetsMake( kPadding, kPadding, kPadding, kPadding );
       //
       NSMutableString* combined_text_content = [NSMutableString string];
-      for ( const auto& f : std::span{ inscriptions_.begin(), inscriptions_count_ } )
+      for ( const auto& f : std::span{ inscriptions_.begin( ), inscriptions_count_ } )
       {
          if ( !f.content.empty( ) )
          {
@@ -676,36 +676,36 @@ namespace ash
          }
       }
       //
-      const CGFloat panel_h = kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0;
-      MG_Panel* panel       = make_panel( title_.data( ), panel_w, panel_h, signal_, combined_text_content );
-      //
+      const CGFloat panel_h       = kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0;
+      MG_Panel* panel             = make_panel( title_.data( ), panel_w, panel_h, signal_, combined_text_content );
+      panel.initialFirstResponder = panel.contentView;
+      [panel center];
       [panel.contentView addSubview:content];
       //
       objc_setAssociatedObject( panel, "master_tag", @( master.tag ), OBJC_ASSOCIATION_RETAIN_NONATOMIC );
-      //
       content.translatesAutoresizingMaskIntoConstraints = NO;
       //
       [NSLayoutConstraint activateConstraints:@[
-         [content.centerYAnchor constraintEqualToAnchor:panel.contentView.centerYAnchor constant:kTitleHeightOffset * 0.5],
-         [content.leadingAnchor constraintEqualToAnchor:panel.contentView.leadingAnchor],
+         [content.centerYAnchor  constraintEqualToAnchor:panel.contentView.centerYAnchor constant:kTitleHeightOffset * 0.5],
+         [content.leadingAnchor  constraintEqualToAnchor:panel.contentView.leadingAnchor],
          [content.trailingAnchor constraintEqualToAnchor:panel.contentView.trailingAnchor]
       ]];
       //
-      const auto close_tag = static_cast<NSInteger>( cancel_choice_.value_or( choices_count_ - 1U ) );
+      {
+         const auto close_tag = static_cast<NSInteger>( cancel_choice_.value_or( choices_count_ - 1U ) );
+         MG_ButtonHandler* delegate = handlers[0];
+         delegate.cancel_tag        = close_tag;
+         panel.delegate             = delegate;
+      }
       //
-      MG_ButtonHandler* delegate = handlers[0];
-      delegate.cancel_tag        = close_tag;
-      panel.delegate             = delegate;
-      //
-      panel.initialFirstResponder = panel.contentView;
+      // Ensure the app is fully active before running the modal, otherwise the
+      // panel may appear desaturated/unfocused if called early at startup.
+      [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+      [panel makeKeyAndOrderFront:nil];
       [panel makeKeyWindow];
-      //
-      [panel center];
-      [panel makeKeyAndOrderFront:nil];
-      [NSApp activateIgnoringOtherApps:YES];
-      //
-      [panel makeKeyAndOrderFront:nil];
       const auto selection = static_cast<size_t>( [NSApp runModalForWindow:panel] );
+      [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+      //
       return selection < choices_count_ ? choices_[selection] : Choice{ };
    }
 }
