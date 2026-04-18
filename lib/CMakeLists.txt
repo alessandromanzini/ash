@@ -1,17 +1,6 @@
 # # "cmake-lists": ash, "author": alessandromanzini
 # Ash lib specific logic here.
 #
-#
-# ========================================
-# CMAKE MODULES
-# ========================================
-#
-include( add_library_distribution_targets )
-include( generate_umbrella_header )
-include( mark_non_standard_sources )
-include( target_compile_options_strict )
-#
-#
 # ========================================
 # TARGET CONFIGURATION
 # ========================================
@@ -31,13 +20,17 @@ add_library( ${OBJECT_TARGET} OBJECT )
 file( GLOB_RECURSE TARGET_SOURCES "${SRC_DIR}/shared/*.cpp" )
 #
 if( APPLE )
+    #
     target_link_libraries( ${OBJECT_TARGET} PRIVATE "-framework Cocoa" )
     file( GLOB_RECURSE APPLE_OBJ_C_FILES "${SRC_DIR}/platform/darwin/*.mm" )
-    mark_non_standard_sources( ${APPLE_OBJ_C_FILES} )
+    cdrk_sources_disable_pedantic( ${APPLE_OBJ_C_FILES} )
     list( APPEND TARGET_SOURCES ${APPLE_OBJ_C_FILES} )
+    #
 elseif( WIN32 )
+    #
     file( GLOB_RECURSE WIN32_CPP_FILES "${SRC_DIR}/platform/win32/*.cpp" )
     list( APPEND TARGET_SOURCES ${WIN32_CPP_FILES} )
+    #
 endif()
 #
 list( APPEND TARGET_SOURCES ${CBRIDGE_SRC} )
@@ -45,7 +38,7 @@ list( APPEND TARGET_SOURCES ${CBRIDGE_SRC} )
 target_sources( ${OBJECT_TARGET} PRIVATE ${TARGET_SOURCES} )
 #
 # Set OBJECT target compile options and directories.
-target_compile_options_strict( ${OBJECT_TARGET} )
+cdrk_target_compile_options_strict( ${OBJECT_TARGET} )
 target_compile_options( ${OBJECT_TARGET} PRIVATE -g3 )
 #
 target_include_directories( ${OBJECT_TARGET}
@@ -56,13 +49,13 @@ target_include_directories( ${OBJECT_TARGET}
 target_precompile_headers( ${OBJECT_TARGET} PRIVATE "${INC_DIR}/${PROJECT_NAME}/pch.hpp" )
 #
 # Finally add distribution targets.
-add_library_distribution_targets( ${STATIC_TARGET} ${SHARED_TARGET} ${OBJECT_TARGET} ${PROJECT_NAME} )
+cdrk_add_library_dist_targets( ${STATIC_TARGET} ${SHARED_TARGET} ${OBJECT_TARGET} ${PROJECT_NAME} )
 #
 #
 # ========================================
 # UMBRELLA HEADER
 # ========================================
-generate_umbrella_header(
+cdrk_generate_umbrella_header(
         UMBRELLA_HEADER_NAME ${PROJECT_NAME}
         INCLUDE_DIRECTORY ${INC_DIR}
         OUTPUT_DIRECTORY "${INC_DIR}/${PROJECT_NAME}"

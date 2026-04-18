@@ -15,7 +15,7 @@ project( ash
 # Append cmake module path, making sure cmake finds our custom modules. (.cmake)
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" )
 #
-include( mark_non_standard_sources )
+include( cdrake )
 #
 #
 # ========================================
@@ -37,8 +37,10 @@ message( STATUS "C++${CMAKE_CXX_STANDARD} support has been enabled by default." 
 #
 # Build type configuration.
 if( NOT CMAKE_BUILD_TYPE )
+    #
     set( CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE )
     set_property( CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo" )
+    #
 endif()
 message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 #
@@ -49,17 +51,25 @@ message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 #
 set( CBRIDGE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lib/src/platform/compiler/" )
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
+    #
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexperimental-library" )
     string( APPEND CBRIDGE_SRC "clang_cbridge.cpp" )
+    #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+    #
     string( APPEND CBRIDGE_SRC "gnu_cbridge.cpp" )
+    #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
+    #
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP" ) # Enable parallel compilation on MSVC.
     string( APPEND CBRIDGE_SRC "msvc_cbridge.cpp" )
+    #
 else()
+    #
     message( FATAL_ERROR "Unsupported compiler... COMPILER_ID=\"${CMAKE_CXX_COMPILER_ID}\"" )
+    #
 endif()
-mark_non_standard_sources( ${CBRIDGE_SRC} )
+cdrk_sources_disable_pedantic( ${CBRIDGE_SRC} )
 message( STATUS "Using ${CMAKE_CXX_COMPILER_ID} compiler configuration." )
 #
 #
@@ -73,10 +83,12 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" )
 #
 # Set output directories for all build configurations.
 foreach( OUTPUT_CONFIG ${CMAKE_CONFIGURATION_TYPES} )
+    #
     string( TOUPPER ${OUTPUT_CONFIG} OUTPUT_CONFIG )
     set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/bin" )
     set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
+    #
 endforeach()
 #
 #
@@ -96,5 +108,7 @@ add_subdirectory( "lib" )
 #
 # Test executable.
 if( ${ASH_BUILD_TESTS} AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test" )
+    #
     add_subdirectory( "test" )
+    #
 endif()
