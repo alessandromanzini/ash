@@ -1,9 +1,9 @@
 #ifndef ASH_MONOLITH_HPP
 #define ASH_MONOLITH_HPP
 
-#include "ash/pch.hpp"
+#include <ash/pch.hpp>
 
-#include "ash/config/signal.hpp"
+#include <ash/config/signal.hpp>
 
 
 namespace ash

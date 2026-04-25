@@ -13,7 +13,7 @@ IndentWidth: 3
 TabWidth: 3
 
 # Maximum line length before clang-format wraps
-ColumnLimit: 130
+ColumnLimit: 150
 MaxEmptyLinesToKeep: 2
 
 ---
@@ -115,7 +115,7 @@ InsertBraces: true
 # ───[ Line Breaking ]────────────────────────────────────────────────────────────
 
 # Maximum line length before clang-format wraps
-ColumnLimit: 130
+ColumnLimit: 150
 
 # Break all arguments to a new line when they don't fit after open bracket
 AlignAfterOpenBracket: true
@@ -374,7 +374,7 @@ IncludeBlocks: Regroup
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 
 # Merge multiple includes into one block or preserve separation
-MainIncludeChar: Quote
+MainIncludeChar: AngleBracket
 
 # Group and prioritize includes: pch < system < project
 IncludeCategories:
