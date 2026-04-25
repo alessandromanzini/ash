@@ -1,7 +1,7 @@
 #ifndef ASH_CONFIG_HPP
 #define ASH_CONFIG_HPP
 
-#include "ash/pch.hpp"
+#include <ash/pch.hpp>
 
 
 namespace ash::cfg

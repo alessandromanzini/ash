@@ -1,10 +1,10 @@
-#include "ash/module/modal.hpp"
+#include <ash/module/modal.hpp>
 
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 #import <objc/runtime.h>
 
-#include "ash/config/theme.hpp"
+#include <ash/config/theme.hpp>
 
 
 #pragma mark - UI Constants

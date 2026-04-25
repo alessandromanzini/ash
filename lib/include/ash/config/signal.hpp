@@ -1,7 +1,7 @@
 #ifndef ASH_SEVERITY_HPP
 #define ASH_SEVERITY_HPP
 
-#include "ash/pch.hpp"
+#include <ash/pch.hpp>
 
 
 namespace ash
@@ -67,7 +67,7 @@ template <> struct std::formatter<ash::Signal>
       return ctx.end( );
    }
 
-   constexpr auto format( ash::Signal const sig, std::format_context& ctx ) const noexcept
+   constexpr auto format( ash::Signal const sig, std::format_context& ctx ) const noexcept // NOLINT(*-exception-escape)
    {
       return std::format_to( ctx.out( ), "{}", to_repr( sig ) );
    }
