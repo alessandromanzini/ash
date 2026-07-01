@@ -19,7 +19,15 @@
 
 
 namespace ash::cbridge
-{ }
+{
+
+   // std::tm tm{};
+   // #if defined( _WIN32 )
+   // localtime_s( &tm, &meta.timestamp );
+   // #else
+   // localtime_r( &meta.timestamp, &tm );
+   // #endif
+}
 
 
 #endif //!MONGOOSE_CBRIDGE_HPP
