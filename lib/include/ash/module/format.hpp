@@ -10,7 +10,7 @@ namespace ash
    {
       static constexpr bool empty_args = sizeof...( TArgs ) == 0U;
 
-      std::format_string<TArgs...>       fmt;
+      std::format_string<TArgs...> fmt;
       std::tuple<std::decay_t<TArgs>...> args;
 
       constexpr FormatBundle( std::format_string<TArgs...> fmt, TArgs&&... args ) noexcept
@@ -27,7 +27,7 @@ namespace ash
          }
          else
          {
-            return std::string{ fmt.get( ).data( ) };
+            return std::string{ fmt.get( ) };
          }
       }
 

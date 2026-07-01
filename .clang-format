@@ -1,27 +1,6 @@
 ---
-# clang-format version 22
+# clang-format 23.0
 
-# ───[[ ALL ]]────────────────────────────────────────────────────────────────────
-
-BasedOnStyle: LLVM
-DisableFormat: false
-
-# Number of spaces per indentation level
-IndentWidth: 3
-
-# Tab display width (consistent with IndentWidth)
-TabWidth: 3
-
-# Maximum line length before clang-format wraps
-ColumnLimit: 150
-MaxEmptyLinesToKeep: 2
-
----
-# clang-format version 22
-
-# ───[[ C++ ]]────────────────────────────────────────────────────────────────────
-
-Language: Cpp
 BasedOnStyle: LLVM
 DisableFormat: false
 
@@ -215,13 +194,13 @@ QualifierAlignment: Right
 # ───[ Alignment ]────────────────────────────────────────────────────────────────
 
 # Align values in consecutive assignment statements
-AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveAssignments: None
 
 # Align types and names in consecutive declarations
-AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveDeclarations: None
 
 # Align values in consecutive macro definitions
-AlignConsecutiveMacros: Consecutive
+AlignConsecutiveMacros: None
 
 # Align case labels in short consecutive case statements
 AlignConsecutiveShortCaseStatements:
@@ -251,6 +230,7 @@ AllowBreakBeforeNoexceptSpecifier: Never
 
 # Allow inlining of short blocks
 AllowShortBlocksOnASingleLine: Empty
+#AllowShortRecordsOnASingleLine: Empty TODO: Activate when clang-format 23!
 
 # Allow short case labels and expressions to stay on a single line
 AllowShortCaseLabelsOnASingleLine: true

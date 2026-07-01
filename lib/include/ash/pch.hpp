@@ -2,6 +2,7 @@
 #define ASH_PCH_HPP
 
 
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <chrono>
