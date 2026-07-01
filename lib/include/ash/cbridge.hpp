@@ -1,5 +1,5 @@
-#ifndef MONGOOSE_CBRIDGE_HPP
-#define MONGOOSE_CBRIDGE_HPP
+#ifndef ASH_CBRIDGE_HPP
+#define ASH_CBRIDGE_HPP
 
 
 #if defined( _MSC_VER )
@@ -20,7 +20,6 @@
 
 namespace ash::cbridge
 {
-
    // std::tm tm{};
    // #if defined( _WIN32 )
    // localtime_s( &tm, &meta.timestamp );
@@ -30,4 +29,4 @@ namespace ash::cbridge
 }
 
 
-#endif //!MONGOOSE_CBRIDGE_HPP
+#endif //!ASH_CBRIDGE_HPP

@@ -1,5 +1,5 @@
-#ifndef ASH_MONOLITH_HPP
-#define ASH_MONOLITH_HPP
+#ifndef ASH_MODAL_HPP
+#define ASH_MODAL_HPP
 
 #include <ash/pch.hpp>
 
@@ -18,14 +18,14 @@ namespace ash
    // ───[[ REMARK ]]──────────────────────────────────────────────────────────────
    struct Remark // TODO: Allow override for alignment
    {
-      static constexpr float header_font_size  = 16.0f;
-      static constexpr float body_font_size    = 14.0f;
+      static constexpr float header_font_size = 16.0f;
+      static constexpr float body_font_size = 14.0f;
       static constexpr float caption_font_size = 10.0f;
 
-      std::string_view     content;
-      float                font_size  = body_font_size;
-      style::Font          font_style = style::Font::normal;
-      style::TextAlignment alignment  = style::TextAlignment::left;
+      std::string_view content;
+      float font_size = body_font_size;
+      style::Font font_style = style::Font::normal;
+      style::TextAlignment alignment = style::TextAlignment::left;
 
       [[nodiscard]] static auto as_header( std::string_view const content ) noexcept -> Remark
       {
@@ -52,7 +52,7 @@ namespace ash
    struct Choice
    {
       std::string_view label;
-      uint8_t          token                                = UINT8_MAX;
+      uint8_t token = UINT8_MAX;
       enum class Tag : uint8_t { none, master, cancel } tag = Tag::none;
 
       [[nodiscard]] static auto as_master( std::string_view const label, uint8_t const token = UINT8_MAX ) noexcept -> Choice
@@ -73,9 +73,9 @@ namespace ash
       explicit Modal( std::string_view title ) noexcept;
       ~Modal( ) noexcept = default;
 
-      Modal( Modal const& )                        = delete;
-      Modal( Modal&& ) noexcept                    = default;
-      auto operator=( Modal const& ) -> Modal&     = delete;
+      Modal( Modal const& ) = delete;
+      Modal( Modal&& ) noexcept = default;
+      auto operator=( Modal const& ) -> Modal& = delete;
       auto operator=( Modal&& ) noexcept -> Modal& = delete;
 
       [[nodiscard]] auto set_minimum_width( this auto&& self, float width ) noexcept -> decltype( self );
@@ -92,19 +92,19 @@ namespace ash
       std::string_view const title_;
 
       std::optional<float> min_width_;
-      Signal               signal_ = Signal::info;
+      Signal signal_ = Signal::info;
 
-      static constexpr size_t                    max_accessories_count_ = 6U;
+      static constexpr size_t max_accessories_count_ = 6U;
       std::array<Remark, max_accessories_count_> remarks_{}; // use inplace_vector
       std::array<Choice, max_accessories_count_> choices_{};
 
-      uint8_t                remarks_count_ = 0U;
-      uint8_t                choices_count_ = 0U;
+      uint8_t remarks_count_ = 0U;
+      uint8_t choices_count_ = 0U;
       std::optional<uint8_t> master_choice_;
       std::optional<uint8_t> cancel_choice_;
    };
 
-   inline Modal::Modal( std::string_view const title ) noexcept
+   inline Modal::Modal( std::string_view title ) noexcept
       : title_{ title }
    { }
 
@@ -151,4 +151,4 @@ namespace ash
 }
 
 
-#endif //!ASH_MONOLITH_HPP
+#endif //!ASH_MODAL_HPP

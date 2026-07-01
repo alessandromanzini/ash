@@ -45,9 +45,9 @@ namespace ash::policy
       struct dispatch_policy_tag
       { };
 
-      static constexpr auto   dispatch_timing  = DispatchTiming::direct;
-      static constexpr auto   retention_policy = RetentionPolicy::wine;
-      static constexpr size_t pool_size        = 0;
+      static constexpr auto dispatch_timing = DispatchTiming::direct;
+      static constexpr auto retention_policy = RetentionPolicy::wine;
+      static constexpr size_t pool_size = 0;
    } inline constexpr direct;
 
    struct Deferred
@@ -55,9 +55,9 @@ namespace ash::policy
       struct dispatch_policy_tag
       { };
 
-      static constexpr auto   dispatch_timing  = DispatchTiming::deferred;
-      static constexpr auto   retention_policy = RetentionPolicy::wine;
-      static constexpr size_t pool_size        = 64;
+      static constexpr auto dispatch_timing = DispatchTiming::deferred;
+      static constexpr auto retention_policy = RetentionPolicy::wine;
+      static constexpr size_t pool_size = 64;
    } inline constexpr deferred;
 }
 

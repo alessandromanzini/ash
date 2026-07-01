@@ -3,7 +3,6 @@
 
 #include <ash/pch.hpp>
 
-#include <array>
 #include <ash/config/signal.hpp>
 #include <ash/module/policy.hpp>
 
@@ -12,7 +11,7 @@ namespace ash
 {
    struct LogConfig
    {
-      std::string                          identity   = "LOGGER";
+      std::string identity = "LOGGER";
       std::reference_wrapper<std::ostream> log_stream = std::clog;
       std::reference_wrapper<std::ostream> err_stream = std::cerr;
    };
@@ -23,25 +22,25 @@ namespace ash::detail
    struct LogOptions
    {
       std::optional<uint32_t> echo;
-      std::source_location    location;
+      std::source_location location;
    };
 
    struct alignas( 64 ) LogEntry
    {
       enum class ChunkPosition : uint8_t { sole, head, body, tail };
 
-      using chunk_id_type    = uint16_t;
-      using chunk_size_type  = uint16_t;
+      using chunk_id_type = uint16_t;
+      using chunk_size_type = uint16_t;
       using sequence_id_type = uint32_t;
 
-      std::time_t      timestamp;
-      LogOptions       options;
-      Signal           signal;
-      ChunkPosition    chunk_position;
-      chunk_id_type    chunk_id;
+      std::time_t timestamp;
+      LogOptions options;
+      Signal signal;
+      ChunkPosition chunk_position;
+      chunk_id_type chunk_id;
       sequence_id_type sequence_id;
-      chunk_size_type  chunk_len;
-      char             msg[222];
+      chunk_size_type chunk_len;
+      char msg[222];
    };
    static_assert( alignof( LogEntry ) == 64 && sizeof( LogEntry ) % 64 == 0 );
 }
@@ -56,10 +55,10 @@ namespace ash::detail
       {
       public:
          using iterator_category = std::output_iterator_tag;
-         using value_type        = void;
-         using difference_type   = std::ptrdiff_t;
-         using pointer           = void;
-         using reference         = void;
+         using value_type = void;
+         using difference_type = std::ptrdiff_t;
+         using pointer = void;
+         using reference = void;
 
          explicit Iterator( SequentialChunker& chunker, LogEntry& entry )
             : chunker_ptr_{ &chunker }
@@ -86,7 +85,7 @@ namespace ash::detail
          {
             entry_ptr_->chunk_position = [this, action] -> LogEntry::ChunkPosition {
                bool const is_first = entry_ptr_->chunk_id == 0;
-               bool const is_last  = action == FlushAction::end;
+               bool const is_last = action == FlushAction::end;
                if ( is_first && is_last )
                {
                   return LogEntry::ChunkPosition::sole;
@@ -111,7 +110,7 @@ namespace ash::detail
 
       private:
          SequentialChunker* chunker_ptr_ = nullptr;
-         LogEntry*          entry_ptr_   = nullptr;
+         LogEntry* entry_ptr_ = nullptr;
       };
 
    public:
@@ -119,21 +118,21 @@ namespace ash::detail
 
       explicit SequentialChunker( Signal sig, LogOptions const& options, LogEntry::sequence_id_type seq_id, flush_fn_type flush_fn ) noexcept
          : flush_fn_{ std::move( flush_fn ) }
-         , current_chunk_{ .timestamp      = std::time( nullptr ),
-                           .options        = options,
-                           .signal         = sig,
+         , current_chunk_{ .timestamp = std::time( nullptr ),
+                           .options = options,
+                           .signal = sig,
                            .chunk_position = LogEntry::ChunkPosition::head,
-                           .chunk_id       = 0,
-                           .sequence_id    = seq_id,
-                           .chunk_len      = 0,
-                           .msg            = {} }
+                           .chunk_id = 0,
+                           .sequence_id = seq_id,
+                           .chunk_len = 0,
+                           .msg = {} }
       { }
 
       auto iterator( ) noexcept -> Iterator { return Iterator{ *this, current_chunk_ }; }
 
    private:
       flush_fn_type const flush_fn_{};
-      LogEntry            current_chunk_{};
+      LogEntry current_chunk_{};
    };
 }
 
@@ -172,7 +171,7 @@ namespace ash::detail
        */
       [[nodiscard]] auto select_sink( Signal sig ) const noexcept -> std::ostream&
       {
-         return std::greater_equal<Signal>{}( sig, Signal::error ) ? config_.err_stream : config_.log_stream;
+         return sig >= Signal::error ? config_.err_stream : config_.log_stream;
       }
 
       auto emit( LogEntry const& entry, Header header, Trailer trailer ) const noexcept -> void
@@ -183,7 +182,7 @@ namespace ash::detail
          if ( header == Header::write )
          {
             std::source_location const& loc = entry.options.location;
-            constexpr auto              fmt = "[{:u}] [{}] at {}:{}:{}\n";
+            constexpr auto fmt = "[{:u}] [{}] at {}:{}:{}\n";
             std::format_to( std::ostreambuf_iterator{ buf }, fmt, entry.signal, config_.identity, loc.file_name( ), loc.line( ), loc.column( ) );
          }
          //
@@ -236,10 +235,10 @@ namespace ash::detail
          ring_doorbell( );
       }
 
-      DeferredDispatcher( DeferredDispatcher const& ) noexcept                    = delete;
-      DeferredDispatcher( DeferredDispatcher&& ) noexcept                         = delete;
+      DeferredDispatcher( DeferredDispatcher const& ) noexcept = delete;
+      DeferredDispatcher( DeferredDispatcher&& ) noexcept = delete;
       auto operator=( DeferredDispatcher const& ) noexcept -> DeferredDispatcher& = delete;
-      auto operator=( DeferredDispatcher&& ) noexcept -> DeferredDispatcher&      = delete;
+      auto operator=( DeferredDispatcher&& ) noexcept -> DeferredDispatcher& = delete;
 
       auto dispatch( LogEntry const& entry ) noexcept -> void
       {
@@ -263,9 +262,9 @@ namespace ash::detail
       LogConfig const config_;
 
       std::array<LogEntry, pool_size> ring_{};
-      std::atomic<size_t>             head_{ 0 };     // Consumer-owned read index (monotonic) -> read by the producer for fullness
-      std::atomic<size_t>             tail_{ 0 };     // Producer-owned write index (monotonic) -> read by the consumer for availability
-      std::atomic<uint32_t>           doorbell_{ 0 }; // Bumped + notified on publish and on stop
+      std::atomic<size_t> head_{ 0 };       // Consumer-owned read index (monotonic) -> read by the producer for fullness
+      std::atomic<size_t> tail_{ 0 };       // Producer-owned write index (monotonic) -> read by the consumer for availability
+      std::atomic<uint32_t> doorbell_{ 0 }; // Bumped + notified on publish and on stop
 
       std::jthread worker_{ [this]( std::stop_token const& stop ) { run( stop ); } };
 
@@ -279,7 +278,7 @@ namespace ash::detail
             uint32_t const ticket = doorbell_.load( std::memory_order_acquire );
             //
             // 2. Process queue head to tail.
-            size_t       head = head_.load( std::memory_order_relaxed );
+            size_t head = head_.load( std::memory_order_relaxed );
             size_t const tail = tail_.load( std::memory_order_acquire );
             while ( head != tail )
             {
@@ -388,9 +387,9 @@ namespace ash
       { }
       ~Logger( ) = default;
 
-      Logger( Logger const& )                        = delete;
-      Logger( Logger&& ) noexcept                    = delete;
-      auto operator=( Logger const& ) -> Logger&     = delete;
+      Logger( Logger const& ) = delete;
+      Logger( Logger&& ) noexcept = delete;
+      auto operator=( Logger const& ) -> Logger& = delete;
       auto operator=( Logger&& ) noexcept -> Logger& = delete;
 
       auto emit( std::source_location loc = std::source_location::current( ) ) noexcept
@@ -405,22 +404,22 @@ namespace ash
          return make_operator( { .echo = cap, .location = loc } );
       }
 
-      auto filter_eq( Signal layer ) noexcept -> void { set_filter( layer, Filter::Op::eq ); }
-      auto filter_lt( Signal layer ) noexcept -> void { set_filter( layer, Filter::Op::lt ); }
-      auto filter_lt_eq( Signal layer ) noexcept -> void { set_filter( layer, Filter::Op::lt_eq ); }
-      auto filter_gt( Signal layer ) noexcept -> void { set_filter( layer, Filter::Op::gt ); }
-      auto filter_gt_eq( Signal layer ) noexcept -> void { set_filter( layer, Filter::Op::gt_eq ); }
+      auto filter_eq( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::eq ); }
+      auto filter_lt( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::lt ); }
+      auto filter_lt_eq( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::lt_eq ); }
+      auto filter_gt( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::gt ); }
+      auto filter_gt_eq( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::gt_eq ); }
 
    private:
-      [[no_unique_address]] AccessPolicy   access_policy_;
+      [[no_unique_address]] AccessPolicy access_policy_;
       [[no_unique_address]] DispatchPolicy dispatch_policy_;
 
       detail::DispatchEngine<DispatchPolicy> dispatch_engine_;
-      uint32_t                               sequence_counter_{ 0U };
+      uint32_t sequence_counter_{ 0U };
 
       struct Filter
       {
-         Signal layer                                               = Signal::trace;
+         Signal signal = Signal::trace;
          enum class Op : uint8_t { eq, lt, lt_eq, gt, gt_eq } order = Op::gt_eq;
       } filter_{};
 
@@ -436,7 +435,7 @@ namespace ash
             // A. UNSYNC access policy: we only ever access the engine from the same thread, no issues here.
             // B. SYNC access policy: the gate mutex ensures the contract.
             access_policy_.gate( [&, sig, fmt_view] {
-               auto const                flush_fn = [this]( detail::LogEntry const& entry ) { dispatch_engine_.dispatch( entry ); };
+               auto const flush_fn = [this]( detail::LogEntry const& entry ) { dispatch_engine_.dispatch( entry ); };
                detail::SequentialChunker chunker{ sig, options, sequence_counter_++, flush_fn };
                //
                if constexpr ( sizeof...( Args ) > 0 )
@@ -451,20 +450,20 @@ namespace ash
          } };
       }
 
-      auto set_filter( Signal layer, Filter::Op order ) noexcept -> void
+      auto set_filter( Signal signal, Filter::Op order ) noexcept -> void
       {
-         access_policy_.gate( [this, layer, order] { filter_ = { .layer = layer, .order = order }; } );
+         access_policy_.gate( [this, signal, order] { filter_ = { .signal = signal, .order = order }; } );
       }
 
       [[nodiscard]] auto can_dispatch( Signal sig ) noexcept -> bool
       {
-         switch ( auto const [layer, order] = filter_; order )
+         switch ( auto const [signal, order] = filter_; order )
          {
-            case Filter::Op::eq   : return std::equal_to<Signal>{}( sig, layer );
-            case Filter::Op::lt   : return std::less<Signal>{}( sig, layer );
-            case Filter::Op::lt_eq: return std::less_equal<Signal>{}( sig, layer );
-            case Filter::Op::gt   : return std::greater<Signal>{}( sig, layer );
-            case Filter::Op::gt_eq: return std::greater_equal<Signal>{}( sig, layer );
+            case Filter::Op::eq   : return sig == signal;
+            case Filter::Op::lt   : return sig < signal;
+            case Filter::Op::lt_eq: return sig <= signal;
+            case Filter::Op::gt   : return sig > signal;
+            case Filter::Op::gt_eq: return sig >= signal;
             default               : std::unreachable( );
          }
       }
