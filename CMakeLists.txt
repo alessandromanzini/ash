@@ -28,6 +28,7 @@ message( STATUS "Configuring project: ${PROJECT_NAME}" )
 set( CMAKE_CXX_STANDARD 26 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
+set( CXX_CLANG_TIDY clang-tidy )
 message( STATUS "C++${CMAKE_CXX_STANDARD} support has been enabled by default." )
 #
 # Enable experimental module support
