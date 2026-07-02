@@ -9,12 +9,20 @@ set( OBJECT_TARGET "${PROJECT_NAME}_object" )
 set( STATIC_TARGET "${PROJECT_NAME}_static" )
 set( SHARED_TARGET "${PROJECT_NAME}_shared" )
 #
-set( SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src" )
-set( INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" )
+set( INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/import" )
+set( SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source" )
 #
 # The OBJECT lib target serves as the single compile source for the next static/shared libs.
 # We compile the objs ones to the allow users to link to either without extra overhead.
 add_library( ${OBJECT_TARGET} OBJECT )
+#
+# Glob module interface files and add them to the OBJECT target.
+file( GLOB_RECURSE MODULE_INTERFACE_FILES "${INC_DIR}/*.cppm" )
+target_sources( ${OBJECT_TARGET}
+                PUBLIC
+                FILE_SET export_modules
+                TYPE CXX_MODULES
+                FILES ${MODULE_INTERFACE_FILES} )
 #
 # Glob shared and platform source and append them to the OBJECT target.
 file( GLOB_RECURSE TARGET_SOURCES "${SRC_DIR}/shared/*.cpp" )
@@ -33,33 +41,31 @@ elseif( WIN32 )
     #
 endif()
 #
-list( APPEND TARGET_SOURCES ${CBRIDGE_SRC} )
+set( CBRIDGE_ABS_PATH "${SRC_DIR}/platform/compiler/${CBRIDGE_SRC}" )
+cdrk_sources_disable_pedantic( ${CBRIDGE_ABS_PATH} )
+list( APPEND TARGET_SOURCES ${CBRIDGE_ABS_PATH} )
+#
+# Set OBJECT target precompile headers. The forced '-include' bakes the PCH's libc++ std declarations into their BMIs,
+# which then fail to merge with a consumer's textual std. For the moment we skip precompiled headers in modules, but
+# should implement "import std" as soon as it becomes non-experimental.
+target_precompile_headers( ${OBJECT_TARGET} PRIVATE "${INC_DIR}/${PROJECT_NAME}/pch.hpp" )
+set_source_files_properties( ${MODULE_INTERFACE_FILES} PROPERTIES SKIP_PRECOMPILE_HEADERS ON )
 #
 target_sources( ${OBJECT_TARGET} PRIVATE ${TARGET_SOURCES} )
 #
 # Set OBJECT target compile options and directories.
-cdrk_target_compile_options_strict( ${OBJECT_TARGET} )
-target_compile_options( ${OBJECT_TARGET} PRIVATE -g3 )
+# We must keep exceptions and rtti enabled because the public compile options must match for BMIs.
+cdrk_target_configure_strict( ${OBJECT_TARGET}
+                              ENABLE_EXCEPTIONS ${ASH_ENABLE_EXCEPTIONS}
+                              ENABLE_RTTI ${ASH_ENABLE_RTTI}
+                              $<$<CONFIG:Debug>:-g3> )
 #
 target_include_directories( ${OBJECT_TARGET}
                             PUBLIC $<BUILD_INTERFACE:${INC_DIR}> $<INSTALL_INTERFACE:include>
                             PRIVATE ${SRC_DIR} )
 #
-# Set OBJECT target precompile headers.
-target_precompile_headers( ${OBJECT_TARGET} PRIVATE "${INC_DIR}/${PROJECT_NAME}/pch.hpp" )
-#
 # Finally add distribution targets.
 cdrk_add_library_dist_targets( ${STATIC_TARGET} ${SHARED_TARGET} ${OBJECT_TARGET} ${PROJECT_NAME} )
-#
-#
-# ========================================
-# UMBRELLA HEADER
-# ========================================
-cdrk_generate_umbrella_header(
-        UMBRELLA_HEADER_NAME ${PROJECT_NAME}
-        INCLUDE_DIRECTORY ${INC_DIR}
-        OUTPUT_DIRECTORY "${INC_DIR}/${PROJECT_NAME}"
-        EXCEPTION_REGEX "cbridge.hpp" )
 #
 #
 # ========================================
