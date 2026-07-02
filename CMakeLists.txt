@@ -1,7 +1,7 @@
 # "cmake-lists": ash, "author": alessandromanzini
 # Top-level cmake file, includes the lib and test subdirectories.
 #
-cmake_minimum_required( VERSION 3.29 )
+cmake_minimum_required( VERSION 4.0 )
 project( ash
          VERSION 0.1.0
          DESCRIPTION "A modern C++ error handling library."
@@ -19,6 +19,15 @@ include( cdrake )
 #
 #
 # ========================================
+# PROJECT OPTIONS
+# ========================================
+#
+option( ASH_ENABLE_EXCEPTIONS "Enable exceptions for ash target." OFF )
+option( ASH_ENABLE_RTTI "Enable rtti for ash target." OFF )
+#
+option( ASH_BUILD_TESTS "Build test executable" ON )
+#
+# ========================================
 # GLOBAL CONFIGURATION
 # ========================================
 #
@@ -27,14 +36,11 @@ message( STATUS "Configuring project: ${PROJECT_NAME}" )
 # C++ standard configuration.
 set( CMAKE_CXX_STANDARD 26 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
-set( CMAKE_CXX_EXTENSIONS OFF )
-set( CXX_CLANG_TIDY clang-tidy )
 message( STATUS "C++${CMAKE_CXX_STANDARD} support has been enabled by default." )
 #
-# Enable experimental module support
-# set( CMAKE_CXX_MODULE_STD ON )
-# set( CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508" )
-# message( STATUS "Module support has been enabled." )
+set( CMAKE_CXX_EXTENSIONS OFF )
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
+set( CXX_CLANG_TIDY "clang-tidy" )
 #
 # Build type configuration.
 if( NOT CMAKE_BUILD_TYPE )
@@ -50,27 +56,24 @@ message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 # COMPILER-SPECIFIC SETTINGS
 # ========================================
 #
-set( CBRIDGE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/lib/src/platform/compiler/" )
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
     #
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexperimental-library" )
-    string( APPEND CBRIDGE_SRC "clang_cbridge.cpp" )
+    set( CBRIDGE_SRC "clang_cbridge.cpp" )
     #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     #
-    string( APPEND CBRIDGE_SRC "gnu_cbridge.cpp" )
+    set( CBRIDGE_SRC "gnu_cbridge.cpp" )
     #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
     #
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP" ) # Enable parallel compilation on MSVC.
-    string( APPEND CBRIDGE_SRC "msvc_cbridge.cpp" )
+    set( CBRIDGE_SRC "msvc_cbridge.cpp" )
     #
 else()
     #
     message( FATAL_ERROR "Unsupported compiler... COMPILER_ID=\"${CMAKE_CXX_COMPILER_ID}\"" )
     #
 endif()
-cdrk_sources_disable_pedantic( ${CBRIDGE_SRC} )
 message( STATUS "Using ${CMAKE_CXX_COMPILER_ID} compiler configuration." )
 #
 #
@@ -91,13 +94,6 @@ foreach( OUTPUT_CONFIG ${CMAKE_CONFIGURATION_TYPES} )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     #
 endforeach()
-#
-#
-# ========================================
-# PROJECT OPTIONS
-# ========================================
-#
-option( ASH_BUILD_TESTS "Build test executable" ON )
 #
 #
 # ========================================

@@ -1,33 +1,34 @@
-#ifndef ASH_CONFIG_HPP
-#define ASH_CONFIG_HPP
+module;
 
 #include <ash/pch.hpp>
 
+export module ash:config;
 
-namespace ash::cfg
+
+export namespace ash::cfg
 {
    enum class PlatformType : uint8_t { unknown = 0, apple, windows, linux_os, ps4, ps5, switch_os, xbox_one };
    enum class CompilerType : uint8_t { clang, msvc, gnu };
 }
 
 
-namespace ash::cfg
+export namespace ash::cfg
 {
-   // ───[[ DEBUG MODE ]]─────────────────────────────────────────────────────────────
+// ───[[ DEBUG MODE ]]─────────────────────────────────────────────────────────────
 #ifdef NDEBUG
    inline constexpr bool debug_mode = false;
 #else
    inline constexpr bool debug_mode = true;
 #endif
 
-   // ───[[ LIB LEVEL ]]──────────────────────────────────────────────────────────────
+// ───[[ LIB LEVEL ]]──────────────────────────────────────────────────────────────
 #ifdef ASH_BUILD_LIB
    inline constexpr bool lib_level = true;
 #else
    inline constexpr bool lib_level = false;
 #endif
 
-   // ───[[ PLATFORM TYPE ]]──────────────────────────────────────────────────────────
+// ───[[ PLATFORM TYPE ]]──────────────────────────────────────────────────────────
 #ifdef __ORBIS__      // PS4
    inline constexpr auto platform_type = PlatformType::ps4;
 #elifdef __PROSPERO__ // PS5
@@ -46,7 +47,7 @@ namespace ash::cfg
    inline constexpr auto platform_type = PlatformType::unknown;
 #endif
 
-   // ───[[ COMPILER ]]───────────────────────────────────────────────────────────────
+// ───[[ COMPILER ]]───────────────────────────────────────────────────────────────
 #ifdef __clang__
    inline constexpr auto compiler_type = CompilerType::clang;
 #elifdef _MSC_VER
@@ -57,6 +58,3 @@ namespace ash::cfg
    static_assert( false, "Unknown compiler!" );
 #endif
 }
-
-
-#endif //!ASH_CONFIG_HPP

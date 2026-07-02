@@ -31,7 +31,6 @@
 #include <variant>
 #include <vector>
 //
-#include <ash/config/config.hpp>
 #include <ash/config/export.hpp>
 
 

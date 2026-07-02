@@ -1,10 +1,11 @@
-#ifndef ASH_FORMAT_HPP
-#define ASH_FORMAT_HPP
+module;
 
 #include <ash/pch.hpp>
 
+export module ash:format;
 
-namespace ash
+
+export namespace ash
 {
    template <typename... TArgs> struct FormatBundle
    {
@@ -15,7 +16,7 @@ namespace ash
 
       constexpr FormatBundle( std::format_string<TArgs...> fmt, TArgs&&... args ) noexcept
          : fmt{ fmt }
-         , args{ std::forward<TArgs>( args )... }
+      , args{ std::forward<TArgs>( args )... }
       { }
 
       [[nodiscard]] constexpr auto format( ) const noexcept -> std::string
@@ -50,6 +51,3 @@ namespace ash
       return FormatBundle<TArgs...>{ fmt, std::forward<TArgs>( args )... };
    }
 }
-
-
-#endif //!ASH_FORMAT_HPP

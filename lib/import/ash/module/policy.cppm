@@ -1,11 +1,12 @@
-#ifndef ASH_POLICY_HPP
-#define ASH_POLICY_HPP
+module;
 
 #include <ash/pch.hpp>
 
+export module ash:policy;
+
 
 // ───[[ ACCESS ]]────────────────────────────────────────────────────────────
-namespace ash::policy
+export namespace ash::policy
 {
    struct Sync
    {
@@ -35,7 +36,7 @@ namespace ash::policy
 }
 
 // ───[[ DISPATCH ]]────────────────────────────────────────────────────────────
-namespace ash::policy
+export namespace ash::policy
 {
    enum class DispatchTiming : uint8_t { direct, deferred };
    enum class RetentionPolicy : uint8_t { milk /* Discard oldest. */, wine /* Discard newest. */ };
@@ -68,7 +69,7 @@ namespace ash::traits::detail
    concept policy = std::is_nothrow_constructible_v<P> && std::is_nothrow_move_constructible_v<P> && std::is_nothrow_destructible_v<P>;
 }
 
-namespace ash::traits
+export namespace ash::traits
 {
    template <typename P>
    concept access_policy = detail::policy<P> && requires { typename P::access_policy_tag; } && requires( P policy ) {
@@ -84,6 +85,3 @@ namespace ash::traits
       { P::pool_size } -> std::convertible_to<size_t>;
    };
 }
-
-
-#endif //!ASH_POLICY
