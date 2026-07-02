@@ -2,7 +2,6 @@
 
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
-#include <ash/config/theme.hpp>
 #import <objc/runtime.h>
 
 
@@ -299,15 +298,16 @@ namespace ash::ui
       }
    }
 
-   [[nodiscard]] auto to_color( Signal sig ) noexcept -> NSColor*
+   [[nodiscard]] auto to_ns_color( theme::Color color ) noexcept -> NSColor*
    {
       auto const uint_to_float = []( uint8_t channel ) { return static_cast<CGFloat>( channel ) / UINT8_MAX; };
-      theme::Color const color = theme::signal_to_color( sig );
       return [NSColor colorWithRed:uint_to_float( color.r )
                              green:uint_to_float( color.g )
                               blue:uint_to_float( color.b )
                              alpha:uint_to_float( color.a )];
    }
+
+   [[nodiscard]] auto to_color( Signal sig ) noexcept -> NSColor* { return to_ns_color( theme::signal_to_color( sig ) ); }
 
    [[nodiscard]] auto to_symbol( Signal sig ) noexcept -> NSString*
    {
@@ -359,7 +359,7 @@ namespace ash::ui
       return img;
    }
 
-   [[nodiscard]] auto make_label( Remark const& remark ) noexcept -> NSTextField*
+   [[nodiscard]] auto make_label( Description const& remark ) noexcept -> NSTextField*
    {
       NSTextField* label = [[NSTextField alloc] initWithFrame:NSZeroRect];
       //
@@ -454,7 +454,7 @@ namespace ash::ui
 
 namespace ash::ui
 {
-   [[nodiscard]] auto make_text_stack( std::span<Remark const> fields, CGFloat width ) noexcept -> std::pair<NSStackView*, CGFloat>
+   [[nodiscard]] auto make_text_stack( std::span<Description const> fields, CGFloat width ) noexcept -> std::pair<NSStackView*, CGFloat>
    {
       NSStackView* stack = [NSStackView stackViewWithViews:@[]];
       stack.orientation = NSUserInterfaceLayoutOrientationVertical;
@@ -617,9 +617,9 @@ namespace ash::ui
 
 #pragma mark - Modal
 
-namespace ash
+namespace ash::detail
 {
-   auto Modal::raise( ) noexcept -> Choice
+   auto open_modal( ModalRequest const& request ) noexcept -> size_t
    {
       using namespace ui;
       //
@@ -627,39 +627,24 @@ namespace ash
       [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
       [NSApp activateIgnoringOtherApps:YES];
       //
-      auto const max_w = static_cast<CGFloat>( max_modal_width_ );
-      auto const min_w = static_cast<CGFloat>( min_width_.value_or( 0.0f ) );
+      auto const max_w = static_cast<CGFloat>( request.max_width );
+      auto const min_w = static_cast<CGFloat>( request.min_width );
       //
+      size_t const choices_count = request.choices.size( );
       CGFloat const buttons_w =
-        static_cast<CGFloat>( choices_count_ ) * kButtonWidth + static_cast<CGFloat>( choices_count_ - 1U ) * kSpacing + kPadding * 2.0;
+        static_cast<CGFloat>( choices_count ) * kButtonWidth + static_cast<CGFloat>( choices_count - 1U ) * kSpacing + kPadding * 2.0;
       //
       CGFloat const panel_w = std::min( std::max( min_w, buttons_w ), max_w );
       CGFloat const inner_w = panel_w - kPadding * 2.0;
       //
-      auto const [text_stack, text_h] = make_text_stack( std::span{ remarks_.begin( ), remarks_count_ }, inner_w );
+      auto const [text_stack, text_h] = make_text_stack( request.descriptions, inner_w );
       //
-      NSStackView* buttons = make_button_row( std::span{ choices_.begin( ), choices_count_ } );
+      NSStackView* buttons = make_button_row( request.choices );
       NSArray* btn_view = buttons.views;
       //
-      NSButton* master = btn_view[master_choice_.value_or( 0U )];
-      master.layer.backgroundColor = to_color( signal_ ).CGColor;
+      NSButton* master = btn_view[request.master_choice];
+      master.layer.backgroundColor = to_ns_color( request.signal_color ).CGColor;
       master.layer.cornerRadius = kButtonRadius;
-      //
-      if ( cancel_choice_ )
-      {
-         [btn_view[cancel_choice_.value( )] setKeyEquivalent:@"\033"];
-      }
-      //
-      NSMutableArray* handlers = [NSMutableArray array];
-      //
-      for ( NSButton* b in btn_view )
-      {
-         MG_ButtonHandler* h = [[MG_ButtonHandler alloc] init];
-         h.tag = b.tag;
-         b.target = h;
-         b.action = @selector( handleClick: );
-         [handlers addObject:h];
-      }
       //
       NSStackView* content = [NSStackView stackViewWithViews:@[ text_stack, buttons ]];
       content.orientation = NSUserInterfaceLayoutOrientationVertical;
@@ -668,7 +653,7 @@ namespace ash
       content.edgeInsets = NSEdgeInsetsMake( kPadding, kPadding, kPadding, kPadding );
       //
       NSMutableString* combined_text_content = [NSMutableString string];
-      for ( auto const& f : std::span{ remarks_.begin( ), remarks_count_ } )
+      for ( auto const& f : request.descriptions )
       {
          if ( !f.content.empty( ) )
          {
@@ -678,7 +663,7 @@ namespace ash
       }
       //
       CGFloat const panel_h = kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0;
-      MG_Panel* panel = make_panel( title_.data( ), panel_w, panel_h, signal_, combined_text_content );
+      MG_Panel* panel = make_panel( request.title.data( ), panel_w, panel_h, request.signal, combined_text_content );
       panel.initialFirstResponder = panel.contentView;
       [panel center];
       [panel.contentView addSubview:content];
@@ -691,12 +676,27 @@ namespace ash
          [content.leadingAnchor constraintEqualToAnchor:panel.contentView.leadingAnchor],
          [content.trailingAnchor constraintEqualToAnchor:panel.contentView.trailingAnchor]
       ]];
-      //
-      {
-         auto const close_tag = static_cast<NSInteger>( cancel_choice_.value_or( choices_count_ - 1U ) );
-         MG_ButtonHandler* delegate = handlers[0];
-         delegate.cancel_tag = close_tag;
-         panel.delegate = delegate;
+       //
+       {
+          NSMutableArray* handlers = [NSMutableArray array];
+          //
+          for ( NSButton* b in btn_view )
+          {
+             MG_ButtonHandler* h = [[MG_ButtonHandler alloc] init];
+             h.tag = b.tag;
+             b.target = h;
+             b.action = @selector( handleClick: );
+             [handlers addObject:h];
+          }
+           //
+          if ( request.has_cancel )
+          {
+             [btn_view[request.cancel_choice] setKeyEquivalent:@"\033"];
+             auto const close_tag = static_cast<NSInteger>( request.cancel_choice );
+             MG_ButtonHandler* delegate = handlers[0];
+             delegate.cancel_tag = close_tag;
+             panel.delegate = delegate;
+          }
       }
       //
       // Ensure the app is fully active before running the modal, otherwise the
@@ -707,6 +707,6 @@ namespace ash
       auto const selection = static_cast<size_t>( [NSApp runModalForWindow:panel] );
       [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
       //
-      return selection < choices_count_ ? choices_[selection] : Choice{};
+      return selection;
    }
 }

@@ -1,11 +1,16 @@
 #ifndef ASH_THEME_HPP
 #define ASH_THEME_HPP
 
-#include <ash/pch.hpp>
+
+#include <cstdint>
+#include <utility>
 
 #include <ash/config/signal.hpp>
 
 
+// Plain (non-module) header: the single definition of the theme value types. Included from the ash
+// module (global module fragment of :theme, which re-exports these names) and directly from the
+// Objective-C++ platform layer.
 namespace ash::theme
 {
    struct Color
