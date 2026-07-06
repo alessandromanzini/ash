@@ -1,8 +1,10 @@
 module;
 
-#include <ash/pch.hpp>
+#include <cstdint> // global uint8_t
 
 export module ash:log_config;
+
+import std;
 
 
 export namespace ash::cfg

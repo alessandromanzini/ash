@@ -1,7 +1,9 @@
 #ifndef ASH_SIGNAL_HPP
 #define ASH_SIGNAL_HPP
 
-#include <ash/pch.hpp>
+#include <cstdint>
+#include <string_view>
+#include <utility>
 
 
 namespace ash

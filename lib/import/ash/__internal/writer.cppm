@@ -1,10 +1,13 @@
 module;
 
-#include <ash/pch.hpp>
+#include <cstddef> // global size_t
+#include <cstdint> // global uint8_t/uint16_t/uint32_t
 
 #include <ash/cbridge.hpp>
 
 export module ash:writer;
+
+import std;
 
 import :log_config;
 import :signal;

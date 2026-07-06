@@ -1,5 +1,8 @@
 #include <ash/module/modal.hpp>
 
+#include <algorithm>
+#include <cmath>
+
 #include <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 #import <objc/runtime.h>

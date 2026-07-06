@@ -20,7 +20,7 @@ add_library( ${OBJECT_TARGET} OBJECT )
 file( GLOB_RECURSE MODULE_INTERFACE_FILES "${INC_DIR}/*.cppm" )
 target_sources( ${OBJECT_TARGET}
                 PUBLIC
-                FILE_SET private_modules
+                FILE_SET export_modules
                 TYPE CXX_MODULES
                 FILES ${MODULE_INTERFACE_FILES} )
 #
@@ -51,8 +51,11 @@ list( APPEND TARGET_SOURCES ${CBRIDGE_ABS_PATH} )
 target_sources( ${OBJECT_TARGET} PRIVATE ${TARGET_SOURCES} )
 #
 # Set OBJECT target compile options and directories.
-cdrk_target_compile_options_strict( ${OBJECT_TARGET} )
-target_compile_options( ${OBJECT_TARGET} PRIVATE $<$<CONFIG:Debug>:-g3> )
+# We must keep exceptions and rtti enabled because the public compile options must match for BMIs.
+cdrk_target_configure_strict( ${OBJECT_TARGET}
+                              ENABLE_EXCEPTIONS ${ASH_ENABLE_EXCEPTIONS}
+                              ENABLE_RTTI ${ASH_ENABLE_RTTI}
+                              $<$<CONFIG:Debug>:-g3> )
 #
 target_include_directories( ${OBJECT_TARGET}
                             PUBLIC $<BUILD_INTERFACE:${INC_DIR}> $<INSTALL_INTERFACE:include>

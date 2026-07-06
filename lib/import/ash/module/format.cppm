@@ -1,8 +1,6 @@
-module;
-
-#include <ash/pch.hpp>
-
 export module ash:format;
+
+import std;
 
 
 export namespace ash
