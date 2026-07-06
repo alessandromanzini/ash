@@ -2,6 +2,38 @@
 # Top-level cmake file, includes the lib and test subdirectories.
 #
 cmake_minimum_required( VERSION 4.0 )
+#
+# Gate for `import std` — must be set before project(). UUID is CMake-version specific (4.3.x).
+set( CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b" )
+#
+# Homebrew's clang ships libc++.modules.json under <prefix>/lib/c++, which `clang -print-file-name`
+# fails to resolve, so CMake's auto-discovery breaks. Point CMake at it directly when we can find it.
+# Must run before project() (toolchain detection). Only overrides when the file actually exists, so
+# it is a no-op for toolchains whose auto-discovery already works.
+if( NOT CMAKE_CXX_STDLIB_MODULES_JSON )
+    # The compiler may be given as a bare name (e.g. a preset with "clang++"), so resolve it to a full
+    # path via PATH / $ENV{CXX} before deriving the sibling lib/c++ directory.
+    set( _ash_cxx "${CMAKE_CXX_COMPILER}" )
+    if( NOT _ash_cxx )
+        set( _ash_cxx "$ENV{CXX}" )
+    endif()
+    if( NOT _ash_cxx )
+        set( _ash_cxx "c++" )
+    endif()
+    find_program( _ash_cxx_path NAMES "${_ash_cxx}" )
+    if( _ash_cxx_path )
+        get_filename_component( _ash_bindir "${_ash_cxx_path}" DIRECTORY )
+        get_filename_component( _ash_modules_json "${_ash_bindir}/../lib/c++/libc++.modules.json" ABSOLUTE )
+        if( EXISTS "${_ash_modules_json}" )
+            set( CMAKE_CXX_STDLIB_MODULES_JSON "${_ash_modules_json}" )
+        endif()
+    endif()
+    unset( _ash_cxx )
+    unset( _ash_cxx_path CACHE )
+    unset( _ash_bindir )
+    unset( _ash_modules_json )
+endif()
+#
 project( ash
          VERSION 0.1.0
          DESCRIPTION "A modern C++ error handling library."
@@ -19,6 +51,15 @@ include( cdrake )
 #
 #
 # ========================================
+# PROJECT OPTIONS
+# ========================================
+#
+option( ASH_ENABLE_EXCEPTIONS "Enable exceptions for ash target." OFF )
+option( ASH_ENABLE_RTTI "Enable rtti for ash target." OFF )
+#
+option( ASH_BUILD_TESTS "Build test executable" ON )
+#
+# ========================================
 # GLOBAL CONFIGURATION
 # ========================================
 #
@@ -33,10 +74,11 @@ set( CMAKE_CXX_EXTENSIONS OFF )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CXX_CLANG_TIDY clang-tidy )
 #
-# Enable experimental module support
-# set( CMAKE_CXX_MODULE_STD ON )
-# set( CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "0e5b6991-d74f-4b3d-a41c-cf096e0b2508" )
-# message( STATUS "Module support has been enabled." )
+# `import std` support is enabled via CMAKE_CXX_MODULE_STD + the version-gated experimental UUID.
+# The UUID must be set before project() (done at the top of this file); CMAKE_CXX_MODULE_STD is read
+# when targets are created, so setting it here (before add_subdirectory) is fine.
+set( CMAKE_CXX_MODULE_STD ON )
+message( STATUS "import std support enabled." )
 #
 # Build type configuration.
 if( NOT CMAKE_BUILD_TYPE )
@@ -51,6 +93,8 @@ message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 # ========================================
 # COMPILER-SPECIFIC SETTINGS
 # ========================================
+#
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti" )
 #
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
     #
@@ -90,13 +134,6 @@ foreach( OUTPUT_CONFIG ${CMAKE_CONFIGURATION_TYPES} )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     #
 endforeach()
-#
-#
-# ========================================
-# PROJECT OPTIONS
-# ========================================
-#
-option( ASH_BUILD_TESTS "Build test executable" ON )
 #
 #
 # ========================================

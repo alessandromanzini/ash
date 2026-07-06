@@ -1,10 +1,10 @@
 module;
 
-#include <ash/pch.hpp>
-
 #include <ash/config/signal.hpp>
 
 export module ash:signal;
+
+import std;
 
 
 export namespace ash

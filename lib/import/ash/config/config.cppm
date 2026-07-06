@@ -1,6 +1,6 @@
 module;
 
-#include <ash/pch.hpp>
+#include <cstdint> // global uint8_t (import std only provides std::uint8_t)
 
 export module ash:config;
 

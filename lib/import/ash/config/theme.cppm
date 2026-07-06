@@ -1,6 +1,5 @@
 module;
 
-#include <ash/pch.hpp>
 #include <ash/config/theme.hpp>
 
 export module ash:theme;

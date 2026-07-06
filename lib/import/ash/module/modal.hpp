@@ -1,8 +1,12 @@
 #ifndef ASH_MODAL_HPP
 #define ASH_MODAL_HPP
 
-#include <ash/pch.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <string_view>
 
+#include <ash/config/export.hpp>
 #include <ash/config/signal.hpp>
 #include <ash/config/theme.hpp>
 

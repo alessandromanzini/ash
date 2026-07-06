@@ -1,8 +1,10 @@
 module;
 
-#include <ash/pch.hpp>
+#include <cstdint> // global uint8_t/uint32_t
 
 export module ash:logger;
+
+import std;
 
 import :signal;
 import :policy;
