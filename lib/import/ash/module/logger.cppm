@@ -108,6 +108,8 @@ export namespace ash
       auto filter_gt( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::gt ); }
       auto filter_gt_eq( Signal signal ) noexcept -> void { set_filter( signal, Filter::Op::gt_eq ); }
 
+      auto clear_filter() noexcept -> void { set_filter( Signal::trace, Filter::Op::gt_eq ); }
+
    private:
       [[no_unique_address]] AccessPolicy access_policy_;
       [[no_unique_address]] DispatchPolicy dispatch_policy_;
