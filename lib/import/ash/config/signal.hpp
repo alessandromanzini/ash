@@ -6,14 +6,16 @@
 
 namespace ash
 {
-   // ───[[ SIGNAL ]]──────────────────────────────────────────────────────────────
+   /**
+    * \p Signal is an enumeration that represents degree of importance of the data it is linked to.
+    */
    enum class Signal : uint8_t {
-      trace = 0, // Signal for granular execution detail.
-      debug,     // Signal for debugging utility.
-      info,      // Signal for general information.
-      warning,   // Signal for degraded behavior, system still operational.
-      error,     // Signal for operation failed, system recovery may be possible.
-      fatal      // Signal for catastrophic failure, continuation is UB.
+      trace = 0, // For granular execution detail.
+      debug,     // For debugging utility.
+      info,      // For general information.
+      warning,   // For degraded behavior, system still operational.
+      error,     // For operation failed, system recovery may be possible.
+      fatal      // For catastrophic failure, continuation is UB.
    };
 
    namespace reflection

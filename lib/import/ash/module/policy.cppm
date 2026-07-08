@@ -5,7 +5,9 @@ module;
 export module ash:policy;
 
 
-// ───[[ ACCESS ]]────────────────────────────────────────────────────────────
+/**
+ * Access policies, that control how the consumer threads interact.
+ */
 export namespace ash::policy
 {
    struct Sync
@@ -35,7 +37,9 @@ export namespace ash::policy
    } inline constexpr unsync;
 }
 
-// ───[[ DISPATCH ]]────────────────────────────────────────────────────────────
+/**
+ * Dispatch policies, that control where information is flushed, how and how much data may be retained.
+ */
 export namespace ash::policy
 {
    enum class DispatchTiming : uint8_t { direct, deferred };
@@ -62,7 +66,9 @@ export namespace ash::policy
    } inline constexpr deferred;
 }
 
-
+/**
+ * Concept traits for policies.
+ */
 namespace ash::traits::detail
 {
    template <typename P>

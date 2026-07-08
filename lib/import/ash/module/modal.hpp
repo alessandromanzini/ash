@@ -9,14 +9,18 @@
 
 namespace ash
 {
-   // ───[[ STYLES ]]──────────────────────────────────────────────────────────────
+   /**
+    * Styles for the modal title and descriptions.
+    */
    namespace style
    {
       enum class Font : uint8_t { normal, bold, italic };
       enum class TextAlignment : uint8_t { left, center, right, justified };
    }
 
-   // ───[[ DESCRIPTION ]]─────────────────────────────────────────────────────────
+   /**
+    * A \p Description represents a text body in the \p Modal view.
+    */
    struct Description // TODO: Allow override for alignment
    {
       static constexpr float header_font_size = 16.0f;
@@ -49,7 +53,9 @@ namespace ash
       }
    };
 
-   // ───[[ CHOICE ]]──────────────────────────────────────────────────────────────
+   /**
+    * A \p Choice represents a button selection in response to the \p Modal view.
+    */
    struct Choice
    {
       std::string_view label;
