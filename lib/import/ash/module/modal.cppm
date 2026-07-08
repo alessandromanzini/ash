@@ -21,7 +21,9 @@ export namespace ash
    using ash::Choice;
    using ash::Description;
 
-   // ───[[ MODAL ]]───────────────────────────────────────────────────────────────
+   /**
+    * A \p Modal is a builder class used to open an OS specific panel with customizable descriptions and outputs.
+    */
    class Modal final
    {
    public:

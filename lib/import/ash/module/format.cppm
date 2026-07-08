@@ -7,6 +7,11 @@ export module ash:format;
 
 export namespace ash
 {
+   /**
+    * The \p FormatBundle represents a string format and args as a single packet, making it easier to pass it around along with other optional and
+    * variadic parameters.
+    * @tparam TArgs
+    */
    template <typename... TArgs> struct FormatBundle
    {
       static constexpr bool empty_args = sizeof...( TArgs ) == 0U;

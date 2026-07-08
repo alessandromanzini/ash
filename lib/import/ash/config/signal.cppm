@@ -18,8 +18,11 @@ export namespace ash
    }
 }
 
-// ───[[ SIGNAL FORMATTER ]]────────────────────────────────────────────────────
-template <> struct std::formatter<ash::Signal>
+/**
+ * Custom formatter for the \p Signal enumerator.
+ * @note Also provides :u (uppercase) and :s (short) representations.
+ */
+export template <> struct std::formatter<ash::Signal>
 {
    constexpr auto parse( std::format_parse_context const& ctx ) noexcept -> std::format_parse_context::const_iterator
    {

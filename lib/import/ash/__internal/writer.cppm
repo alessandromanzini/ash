@@ -39,98 +39,9 @@ export namespace ash
    static_assert( alignof( Message ) == 64 && sizeof( Message ) % 64 == 0 );
 }
 
-namespace ash::detail
-{
-   class SequentialChunker final
-   {
-      class Iterator final
-      {
-      public:
-         using iterator_category = std::output_iterator_tag;
-         using value_type = void;
-         using difference_type = std::ptrdiff_t;
-         using pointer = void;
-         using reference = void;
-
-         CBR_FORCE_INLINE explicit Iterator( SequentialChunker& chunker, Message& message )
-            : chunker_ptr_{ &chunker }
-            , message_ptr_{ &message }
-         { }
-
-         CBR_FORCE_INLINE auto operator*( ) noexcept -> Iterator& { return *this; }
-         CBR_FORCE_INLINE auto operator++( ) noexcept -> Iterator& { return *this; }
-         CBR_FORCE_INLINE auto operator++( int ) const noexcept -> Iterator { return *this; }
-
-         CBR_FORCE_INLINE auto operator=( char const c ) noexcept -> Iterator&
-         {
-            Message::chunk_size_type& buffer_pos = message_ptr_->chunk_len;
-            if ( constexpr size_t max_msg_size = sizeof( Message::content ) - 1ULL; buffer_pos == max_msg_size )
-            {
-               flush( cfg::FlushAction::carry_on );
-            }
-            message_ptr_->content[buffer_pos++] = c;
-            //
-            return *this;
-         }
-
-         CBR_FORCE_INLINE auto flush( cfg::FlushAction action ) const noexcept -> void
-         {
-            message_ptr_->chunk_position = [this, action] -> Message::ChunkPosition {
-               bool const is_first = message_ptr_->chunk_id == 0;
-               bool const is_last = action == cfg::FlushAction::end;
-               if ( is_first && is_last )
-               {
-                  return Message::ChunkPosition::sole;
-               }
-               if ( is_first )
-               {
-                  return Message::ChunkPosition::head;
-               }
-               if ( is_last )
-               {
-                  return Message::ChunkPosition::tail;
-               }
-               return Message::ChunkPosition::body;
-            }( );
-            //
-            message_ptr_->chunk_id++;
-            message_ptr_->content[message_ptr_->chunk_len++] = '\0';
-            //
-            std::invoke( chunker_ptr_->flush_fn_, *message_ptr_ );
-            message_ptr_->chunk_len = 0;
-         }
-
-      private:
-         SequentialChunker* chunker_ptr_ = nullptr;
-         Message* message_ptr_ = nullptr;
-      };
-
-   public:
-      using flush_fn_type = std::function<void( Message const& )>; // This should be std::move_only_function when clang supports it :)
-
-      CBR_FORCE_INLINE explicit SequentialChunker(
-        Signal sig, WriteOptions const& options, Message::sequence_id_type seq_id, flush_fn_type flush_fn ) noexcept
-         : flush_fn_{ std::move( flush_fn ) }
-         , current_chunk_{ .timestamp = std::time( nullptr ),
-                           .options = options,
-                           .signal = sig,
-                           .chunk_position = Message::ChunkPosition::head,
-                           .chunk_id = 0,
-                           .sequence_id = seq_id,
-                           .chunk_len = 0,
-                           .content = {} }
-      { }
-
-      CBR_FORCE_INLINE auto iterator( ) noexcept -> Iterator { return Iterator{ *this, current_chunk_ }; }
-
-   private:
-      flush_fn_type const flush_fn_{};
-      Message current_chunk_{};
-   };
-}
-
 export namespace ash
 {
+   // todo: rename to writer.
    class LogWriter final
    {
       enum class Header : uint8_t { skip, write };
@@ -198,10 +109,10 @@ export namespace ash
          : writer_{ std::move( config ) }
       { }
 
-      CBR_FORCE_INLINE auto dispatch( Message const& message ) noexcept -> void { writer_.consume( message ); }
+      CBR_FORCE_INLINE auto dispatch( Message const& message ) const noexcept -> void { writer_.consume( message ); }
 
    private:
-      LogWriter writer_;
+      LogWriter const writer_;
    };
 
    /**
@@ -266,7 +177,7 @@ export namespace ash
 
       auto run( ) noexcept -> void
       {
-         LogWriter writer{ config_ };
+         LogWriter const writer{ config_ };
          //
          while ( true )
          {

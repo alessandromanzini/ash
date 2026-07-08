@@ -1,5 +1,5 @@
 ---
-# clang-format 23.0
+# clang-format 22.1.8
 
 BasedOnStyle: LLVM
 DisableFormat: false
@@ -356,14 +356,16 @@ IncludeIsMainRegex: '([-_](test|unittest))?$'
 # Merge multiple includes into one block or preserve separation
 MainIncludeChar: AngleBracket
 
-# Group and prioritize includes: pch < system < project
+# Group and prioritize includes: pch < system < project < relative
 IncludeCategories:
   - Regex: '.*pch\.hpp'
     Priority: 1
-  - Regex: '^<.*'
+  - Regex: '^<[^.]+>$'
     Priority: 2
-  - Regex: '^".*'
+  - Regex: '^<.+>$'
     Priority: 3
+  - Regex: '^".*"$'
+    Priority: 4
 
 # ───[ Comments ]─────────────────────────────────────────────────────────────────
 
