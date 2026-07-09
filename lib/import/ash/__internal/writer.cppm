@@ -9,6 +9,7 @@ export module ash:writer;
 import :log_config;
 import :signal;
 import :policy;
+import :format;
 
 
 export namespace ash
@@ -19,6 +20,9 @@ export namespace ash
       std::source_location where;
    };
 
+   /**
+    * Representation of a string chunk with extraction metadata.
+    */
    struct alignas( 64 ) Message
    {
       enum class ChunkPosition : uint8_t { sole, head, body, tail };
@@ -41,14 +45,20 @@ export namespace ash
 
 export namespace ash
 {
-   // todo: rename to writer.
-   class LogWriter final
+   /**
+    * @brief Emits chunked log records to the routed sink.
+    *
+    * It routes a signal to the correct stream and replays a \p Message: the title line is written only on the boundary chunks, and the (already
+    * formatted) content is written raw. Both the title and the content are flushed with bulk \c sputn calls — nothing is streamed to the sink
+    * character-by-character unless necessary.
+    */
+   class Writer final
    {
       enum class Header : uint8_t { skip, write };
       enum class Trailer : uint8_t { skip, write };
 
    public:
-      explicit LogWriter( cfg::LogConfig config ) noexcept
+      explicit Writer( cfg::WriteConfig config ) noexcept
          : config_{ std::move( config ) }
       { }
 
@@ -65,7 +75,7 @@ export namespace ash
       }
 
    private:
-      cfg::LogConfig const config_;
+      cfg::WriteConfig const config_;
 
       /**
        * Route log stream and err stream depending on the input signal.
@@ -80,21 +90,49 @@ export namespace ash
 
       CBR_FORCE_INLINE auto emit( Message const& message, Header header, Trailer trailer ) const noexcept -> void
       {
-         // Get the stream's buffer directly so we can format directly to it without any intermediate std::string.
+         // Get the stream's buffer directly so we can bulk-write to it without any intermediate std::string.
          std::streambuf* const buf = select_sink( message.signal ).rdbuf( );
          //
          if ( header == Header::write )
          {
-            std::source_location const& loc = message.options.where;
-            constexpr auto fmt = "[{:u}] [{}] at {}:{}:{}\n";
-            std::format_to( std::ostreambuf_iterator{ buf }, fmt, message.signal, config_.identity, loc.file_name( ), loc.line( ), loc.column( ) );
+            write_title( buf, message );
          }
          //
          buf->sputn( message.content, message.chunk_len > 0 ? message.chunk_len - 1 : 0 );
          //
          if ( trailer == Trailer::write )
          {
-            buf->sputn( "\n\n", 2 );
+            buf->sputn( config_.trailer_content.c_str( ), static_cast<std::streamsize>( config_.trailer_content.size( ) ) );
+         }
+      }
+
+      /**
+       * Format the title into a stack buffer and flush it with a single bulk \c sputn call. Only a pathologically long string falls back to a
+       * per-character streamed write, so the title is never truncated.
+       */
+      CBR_FORCE_INLINE auto write_title( std::streambuf* buf, Message const& message ) const noexcept -> void
+      {
+         constexpr size_t title_capacity = 256;
+         std::array<char, title_capacity> scratch;
+         //
+         constexpr auto fmt = "[{:u}] [{}] at {}:{}:{}\n";
+         std::source_location const& loc = message.options.where;
+         char const* const file_name = loc.file_name( );
+         uint32_t const line = loc.line( );
+         uint32_t const column = loc.column( );
+         //
+         auto const [out, size] =
+           std::format_to_n( scratch.data( ), scratch.size( ), fmt, message.signal, config_.identity, file_name, line, column );
+         //
+         // If formatting fitted the scratch buffer, bulk write to stream, ...
+         if ( std::cmp_less_equal( size, scratch.size( ) ) )
+         {
+            buf->sputn( scratch.data( ), out - scratch.data( ) );
+         }
+         else
+         {
+            // ... otherwise format character per character to stream iterator.
+            std::format_to( std::ostreambuf_iterator{ buf }, fmt, message.signal, config_.identity, file_name, line, column );
          }
       }
    };
@@ -105,14 +143,14 @@ export namespace ash
    class DirectDispatcher final
    {
    public:
-      explicit DirectDispatcher( cfg::LogConfig config ) noexcept
+      explicit DirectDispatcher( cfg::WriteConfig config ) noexcept
          : writer_{ std::move( config ) }
       { }
 
       CBR_FORCE_INLINE auto dispatch( Message const& message ) const noexcept -> void { writer_.consume( message ); }
 
    private:
-      LogWriter const writer_;
+      Writer const writer_;
    };
 
    /**
@@ -127,7 +165,7 @@ export namespace ash
    template <size_t pool_size> class DeferredDispatcher final
    {
    public:
-      explicit DeferredDispatcher( cfg::LogConfig config ) noexcept
+      explicit DeferredDispatcher( cfg::WriteConfig config ) noexcept
          : config_{ std::move( config ) }
       { }
 
@@ -165,19 +203,19 @@ export namespace ash
       }
 
    private:
-      cfg::LogConfig const config_;
+      cfg::WriteConfig const config_;
 
       std::array<Message, pool_size> ring_{};
       std::atomic<size_t> head_{ 0 };       // Consumer-owned read index (monotonic) -> read by the producer for fullness
       std::atomic<size_t> tail_{ 0 };       // Producer-owned write index (monotonic) -> read by the consumer for availability
       std::atomic<uint32_t> doorbell_{ 0 }; // Bumped + notified on publish and on stop
-      std::atomic<bool> stop_token_{ false }; // Set by the destructor before the final doorbell ring
+      std::atomic<bool> stop_token_{ false };
 
       std::thread worker_{ [this] { run( ); } };
 
       auto run( ) noexcept -> void
       {
-         LogWriter const writer{ config_ };
+         Writer const writer{ config_ };
          //
          while ( true )
          {
@@ -212,10 +250,7 @@ export namespace ash
          doorbell_.notify_one( );
       }
 
-      auto is_stop_requested( ) const noexcept -> bool
-      {
-         return stop_token_.load( std::memory_order_acquire );
-      }
+      auto is_stop_requested( ) const noexcept -> bool { return stop_token_.load( std::memory_order_acquire ); }
    };
 }
 

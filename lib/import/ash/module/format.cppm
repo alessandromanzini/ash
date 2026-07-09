@@ -21,7 +21,7 @@ export namespace ash
 
       constexpr FormatBundle( std::format_string<TArgs...> fmt, TArgs&&... args ) noexcept
          : fmt{ fmt }
-      , args{ std::forward<TArgs>( args )... }
+         , args{ std::forward<TArgs>( args )... }
       { }
 
       [[nodiscard]] constexpr auto format( ) const noexcept -> std::string
