@@ -176,7 +176,7 @@ export namespace ash
       static_assert( DispatchPolicy::retention_policy != policy::RetentionPolicy::milk, "Milk policy is not supported!" );
 
    public:
-      explicit Logger( AccessPolicy access, DispatchPolicy dispatch, cfg::LogConfig config = {} ) noexcept
+      explicit Logger( AccessPolicy access, DispatchPolicy dispatch, cfg::WriteConfig config = {} ) noexcept
          : access_policy_{ std::move( access ) }
          , dispatch_policy_{ std::move( dispatch ) }
          , dispatch_engine_{ std::move( config ) }

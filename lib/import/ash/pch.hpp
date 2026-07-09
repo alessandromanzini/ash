@@ -2,6 +2,7 @@
 #define ASH_PCH_HPP
 
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <cassert>
@@ -11,6 +12,7 @@
 #include <cstddef>
 #include <ctime>
 #include <deque>
+#include <expected>
 #include <flat_map>
 #include <fstream>
 #include <functional>
@@ -21,6 +23,7 @@
 #include <mutex>
 #include <print>
 #include <random>
+#include <ranges>
 #include <source_location>
 #include <span>
 #include <string>
