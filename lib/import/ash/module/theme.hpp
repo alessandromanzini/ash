@@ -3,7 +3,7 @@
 
 #include <ash/pch.hpp>
 
-#include <ash/config/signal.hpp>
+#include <ash/module/signal.hpp>
 
 
 /**

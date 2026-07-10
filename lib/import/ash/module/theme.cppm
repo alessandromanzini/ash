@@ -1,6 +1,6 @@
 module;
 
-#include <ash/config/theme.hpp>
+#include <ash/module/theme.hpp>
 
 export module ash:theme;
 

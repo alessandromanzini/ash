@@ -10,6 +10,7 @@
 #include <concepts>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
 #include <ctime>
 #include <deque>
 #include <expected>
@@ -21,6 +22,7 @@
 #include <memory>
 #include <memory_resource>
 #include <mutex>
+#include <optional>
 #include <print>
 #include <random>
 #include <ranges>

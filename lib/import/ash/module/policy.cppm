@@ -44,6 +44,7 @@ export namespace ash::policy
 {
    enum class DispatchTiming : uint8_t { direct, deferred };
    enum class RetentionPolicy : uint8_t { milk /* Discard oldest. */, wine /* Discard newest. */ };
+   enum class OverflowPolicy : uint8_t { truncate, send_to_heap };
 
    struct Direct
    {
@@ -53,9 +54,11 @@ export namespace ash::policy
       static constexpr auto dispatch_timing = DispatchTiming::direct;
       static constexpr auto retention_policy = RetentionPolicy::wine;
       static constexpr size_t pool_size = 0;
+      static constexpr size_t inline_buffer_size = 512;
+      static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr direct;
 
-   struct Deferred
+   struct Deferred // TODO: truncate, stack allowance
    {
       struct dispatch_policy_tag
       { };
@@ -63,6 +66,8 @@ export namespace ash::policy
       static constexpr auto dispatch_timing = DispatchTiming::deferred;
       static constexpr auto retention_policy = RetentionPolicy::wine;
       static constexpr size_t pool_size = 64;
+      static constexpr size_t inline_buffer_size = 204;
+      static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr deferred;
 }
 
