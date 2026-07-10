@@ -434,7 +434,7 @@ namespace ash::ui
       NSAttributedString* icon_str = [NSAttributedString attributedStringWithAttachment:attach];
       //
       // TEXT
-      NSString* text = [NSString stringWithUTF8String:reflection::to_string( sig, true ).data( )];
+      NSString* text = [NSString stringWithUTF8String:reflection::to_string( sig, ash::FormatFlags{ .uppercase = true } ).data( )];
       NSDictionary* attrs = @{ NSFontAttributeName : badge_font, NSForegroundColorAttributeName : ui::to_color( sig ) };
       //
       NSAttributedString* text_str = [[NSAttributedString alloc] initWithString:text attributes:attrs];

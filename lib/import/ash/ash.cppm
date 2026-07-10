@@ -1,10 +1,10 @@
 export module ash;
 
-// CONFIG
 export import :config;
-export import :signal;
-export import :theme;
 
+export import :write_config;
+export import :signal;
+export import :policy;
 export import :logger;
 export import :modal;
-export import :policy;
+// TODO: Evaluate exports
