@@ -3,8 +3,8 @@
 
 #include <ash/pch.hpp>
 
-#include <ash/config/signal.hpp>
-#include <ash/config/theme.hpp>
+#include <ash/module/signal.hpp>
+#include <ash/module/theme.hpp>
 
 
 namespace ash
