@@ -17,7 +17,7 @@ set( SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source" )
 add_library( ${OBJECT_TARGET} OBJECT )
 #
 # Glob module interface files and add them to the OBJECT target.
-file( GLOB_RECURSE MODULE_INTERFACE_FILES "${INC_DIR}/*.cppm" )
+file( GLOB_RECURSE MODULE_INTERFACE_FILES CONFIGURE_DEPENDS "${INC_DIR}/*.cppm" )
 target_sources( ${OBJECT_TARGET}
                 PUBLIC
                 FILE_SET export_modules
@@ -25,18 +25,18 @@ target_sources( ${OBJECT_TARGET}
                 FILES ${MODULE_INTERFACE_FILES} )
 #
 # Glob shared and platform source and append them to the OBJECT target.
-file( GLOB_RECURSE TARGET_SOURCES "${SRC_DIR}/shared/*.cpp" )
+file( GLOB_RECURSE TARGET_SOURCES CONFIGURE_DEPENDS "${SRC_DIR}/shared/*.cpp" )
 #
 if( APPLE )
     #
     target_link_libraries( ${OBJECT_TARGET} PRIVATE "-framework Cocoa" )
-    file( GLOB_RECURSE APPLE_OBJ_C_FILES "${SRC_DIR}/platform/darwin/*.mm" )
+    file( GLOB_RECURSE APPLE_OBJ_C_FILES CONFIGURE_DEPENDS "${SRC_DIR}/platform/darwin/*.mm" )
     cdrk_sources_disable_pedantic( ${APPLE_OBJ_C_FILES} )
     list( APPEND TARGET_SOURCES ${APPLE_OBJ_C_FILES} )
     #
 elseif( WIN32 )
     #
-    file( GLOB_RECURSE WIN32_CPP_FILES "${SRC_DIR}/platform/win32/*.cpp" )
+    file( GLOB_RECURSE WIN32_CPP_FILES CONFIGURE_DEPENDS "${SRC_DIR}/platform/win32/*.cpp" )
     list( APPEND TARGET_SOURCES ${WIN32_CPP_FILES} )
     #
 endif()
