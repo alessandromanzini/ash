@@ -25,7 +25,7 @@ include( cdrake )
 option( ASH_ENABLE_EXCEPTIONS "Enable exceptions for ash target." OFF )
 option( ASH_ENABLE_RTTI "Enable rtti for ash target." OFF )
 #
-option( ASH_BUILD_TESTS "Build test executable" ON )
+# option( ASH_IMPORT_UNIT_TEST "Import unit test target." ON )
 #
 # ========================================
 # GLOBAL CONFIGURATION
@@ -104,8 +104,8 @@ endforeach()
 add_subdirectory( "lib" )
 #
 # Test executable.
-if( ${ASH_BUILD_TESTS} AND IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test" )
+if( IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/local" )
     #
-    add_subdirectory( "test" )
+    add_subdirectory( "local" )
     #
 endif()
