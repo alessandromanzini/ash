@@ -35,7 +35,7 @@ bld/
 [Oo]ut/
 
 # Project-specific files
-[Tt]est/
+[Ll]ocal/
 !lib/src/*/win32
 
 # IDE
