@@ -14,8 +14,6 @@ import :write_config;
 
 export namespace ash
 {
-
-
    /**
     * Owns the sink configuration and the compiled title format. It is deliberately thread-agnostic and optimized to write both title and body as
     * bulk \c sputn calls.
@@ -31,9 +29,10 @@ export namespace ash
          title_format_ = CompiledFormat{ config_.title_format };
       }
 
-      template <size_t inline_buffer_size> CBR_FORCE_INLINE auto emit( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
+      template <size_t inline_buffer_size>
+      CBR_FORCE_INLINE auto emit( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
       {
-         std::streambuf* const buf = config_.log_stream.get( ).rdbuf( );
+         std::streambuf* const buf = select_stream( metadata.signal ).rdbuf( );
          //
          if ( config_.title_injection == schema::WriteConfig::TitleInjection::per_block )
          {
@@ -50,5 +49,15 @@ export namespace ash
    private:
       schema::WriteConfig const config_;
       CompiledFormat title_format_;
+
+      /**
+       * Route log stream and err stream depending on the input signal.
+       * LOG: trace -> warning
+       * ERR: error & fatal
+       */
+      [[nodiscard]] CBR_FORCE_INLINE auto select_stream( Signal sig ) const noexcept -> std::ostream&
+      {
+         return sig >= Signal::error ? config_.err_stream : config_.log_stream;
+      }
    };
 }

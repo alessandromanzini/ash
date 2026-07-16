@@ -36,7 +36,7 @@ export namespace ash::schema
    *
    *       - `{COLUMN}`    — Source column number of the call site.
    *
-   *       - `{FUNCTION}`  — Source column number of the call site.
+   *       - `{FUNCTION}`  — Enclosing function name of the call site.
    *
    * @note Keywords and specs are case-sensitive and must appear exactly as `{KEYWORD}` or `{KEYWORD:spec}`; unrecognized keywords are left unexpanded
    *       in the output.
@@ -46,7 +46,7 @@ export namespace ash::schema
       /// Controls how often the title is (re-)injected into the output.
       /// - `none`: the title is never written.
       /// - `per_block`: the title is written once at the start of each entry.
-      enum class TitleInjection : uint8_t { none, per_block }; // TODO: Implement this
+      enum class TitleInjection : uint8_t { none, per_block };
 
       /// Stream used for regular (informational) log output.
       std::reference_wrapper<std::ostream> log_stream = std::clog;
@@ -76,7 +76,11 @@ export namespace ash::schema
 
       sequence_id_type sequence_id;
       Signal signal;
+
+      /// @warning Deferred dispatch copies this view (not the bytes) into the ring, where it is read later by the worker thread. The referenced
+      ///          storage must therefore outlive the logger (e.g. a string literal or other static storage).
       std::string_view identity;
+
       std::chrono::system_clock::time_point timestamp;
       WriteOptions options;
    };
@@ -102,7 +106,7 @@ export namespace ash::schema
          HmsMapping{        "HH:MM:SS",   HmsPrecision::sec },
          HmsMapping{    "HH:MM:SS.mmm", HmsPrecision::milli },
          HmsMapping{ "HH:MM:SS.uuuuuu", HmsPrecision::micro },
-         HmsMapping{        "%H:%M:%S", HmsPrecision::milli },
+         HmsMapping{        "%H:%M:%S",   HmsPrecision::sec },
       };
    }( );
 

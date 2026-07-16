@@ -147,17 +147,17 @@ export namespace ash::time
       //
       if constexpr ( not detail::is_hours_only_v<Precision> )
       {
-         append_char(':');
+         append_char( ':' );
          cursor = detail::write_two_digit( cursor, static_cast<std::size_t>( hms.minutes( ).count( ) ) );
       }
       if constexpr ( detail::is_sub_minute_v<Precision> )
       {
-         append_char(':');
+         append_char( ':' );
          cursor = detail::write_two_digit( cursor, static_cast<std::size_t>( hms.seconds( ).count( ) ) );
          //
          if constexpr ( TimeString<Precision>::has_decimals )
          {
-         append_char('.');
+            append_char( '.' );
             cursor =
               detail::write_decimals<TimeString<Precision>::fractional_width>( cursor, static_cast<std::size_t>( hms.subseconds( ).count( ) ) );
          }

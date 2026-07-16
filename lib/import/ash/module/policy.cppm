@@ -58,7 +58,7 @@ export namespace ash::policy
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr direct;
 
-   struct Deferred // TODO: truncate, stack allowance
+   struct Deferred
    {
       struct dispatch_policy_tag
       { };
@@ -93,6 +93,8 @@ export namespace ash::traits
    concept dispatch_policy = detail::policy<P> && requires { typename P::dispatch_policy_tag; } && requires {
       { P::dispatch_timing } -> std::convertible_to<policy::DispatchTiming>;
       { P::retention_policy } -> std::convertible_to<policy::RetentionPolicy>;
+      { P::overflow_policy } -> std::convertible_to<policy::OverflowPolicy>;
       { P::pool_size } -> std::convertible_to<size_t>;
+      { P::inline_buffer_size } -> std::convertible_to<size_t>;
    };
 }

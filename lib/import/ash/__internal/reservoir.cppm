@@ -12,11 +12,11 @@ namespace ash::detail
    template <typename Reservoir> class ReservoirOutputIterator final
    {
    public:
-      using value_type = Reservoir::value_type;
+      using value_type = void;
       using difference_type = ptrdiff_t;
-      using pointer = value_type*;
-      using reference = value_type&;
-      using iterator_category = std::input_iterator_tag;
+      using pointer = void;
+      using reference = void;
+      using iterator_category = std::output_iterator_tag;
 
       explicit ReservoirOutputIterator( Reservoir& reservoir ) noexcept
          : reservoir_ptr_{ &reservoir }
