@@ -75,6 +75,7 @@ namespace ash::detail
    {
       enum class Kind : uint8_t { literal, signal, identity, path, line, column, function, quick_time, generic_time } kind;
       std::string_view verbatim{};
+      std::string owned{};
       FormatFlags specs{};
       schema::HmsPrecision precision{};
    };
@@ -128,7 +129,7 @@ namespace ash::detail
          {
             return Field{ .kind = Field::Kind::quick_time, .precision = precision.value( ) };
          }
-         return Field{ .kind = Field::Kind::generic_time, .verbatim = time_spec };
+         return Field{ .kind = Field::Kind::generic_time, .owned = std::format( "{{:{}}}", time_spec ) };
       }
       return std::nullopt;
    }
@@ -145,17 +146,6 @@ namespace ash::detail
          case schema::HmsPrecision::micro: visitor( time::render_hms<std::chrono::microseconds>( timestamp ).view( ) ); break;
          default                         : std::unreachable( );
       }
-   }
-
-   inline auto make_generic_format( std::string_view spec ) -> std::string
-   {
-      std::string format;
-      format.reserve( spec.length( ) + 3 );
-      format.push_back( '{' );
-      format.push_back( ':' );
-      format.append( spec );
-      format.push_back( '}' );
-      return format;
    }
 }
 
@@ -192,8 +182,7 @@ export namespace ash
                   break;
 
                case detail::Field::Kind::generic_time:
-                  std::vformat_to(
-                    reservoir.inserter( ), detail::make_generic_format( field.verbatim ), std::make_format_args( metadata.timestamp ) );
+                  std::vformat_to( reservoir.inserter( ), field.owned, std::make_format_args( metadata.timestamp ) );
                   break;
 
                default: std::unreachable( );
