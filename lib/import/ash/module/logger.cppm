@@ -221,14 +221,22 @@ namespace ash::detail
          std::array<char, P::inline_buffer_size> stack_buffer;
          auto const [written, truncated] = detail::render_to( stack_buffer, fmt, std::forward<Args>( args )... );
          //
-         if ( not truncated ) [[likely]]
+         if constexpr ( P::overflow_policy == policy::OverflowPolicy::truncate )
          {
+            // "truncate" policy: emit the bytes that fit the stack budget, regardless of truncation.
             writer_.emit<P::inline_buffer_size>( metadata, std::string_view{ stack_buffer.data( ), written } );
          }
          else if constexpr ( P::overflow_policy == policy::OverflowPolicy::send_to_heap )
          {
-            // Cold path for lines longer than the stack budget. Kept out-of-line so the common short-line path stays small and well-optimized.
-            writer_.emit<P::inline_buffer_size>( metadata, std::format( fmt, std::forward<Args>( args )... ) );
+            // "send_to_heap" policy: if truncation happens, resort to std::format.
+            if ( not truncated ) [[likely]]
+            {
+               writer_.emit<P::inline_buffer_size>( metadata, std::string_view{ stack_buffer.data( ), written } );
+            }
+            else
+            {
+               writer_.emit<P::inline_buffer_size>( metadata, std::format( fmt, std::forward<Args>( args )... ) );
+            }
          }
       }
 
