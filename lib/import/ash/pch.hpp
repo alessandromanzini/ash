@@ -22,6 +22,7 @@
 #include <memory>
 #include <memory_resource>
 #include <mutex>
+#include <new>
 #include <optional>
 #include <print>
 #include <random>
