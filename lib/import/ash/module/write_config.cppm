@@ -66,7 +66,8 @@ export namespace ash::schema
 
    struct WriteOptions
    {
-      std::optional<uint32_t> echo; // TODO: implement echo
+      /// Maximum number of times the originating call site may emit.
+      std::optional<uint32_t> echo;
       std::source_location where;
    };
 
