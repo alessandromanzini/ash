@@ -29,14 +29,14 @@ export namespace ash
          title_format_ = CompiledFormat{ config_.title_format };
       }
 
-      template <size_t inline_buffer_size>
+      template <size_t buffer_size>
       CBR_FORCE_INLINE auto emit( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
       {
          std::streambuf* const buf = select_stream( metadata.signal ).rdbuf( );
          //
          if ( config_.title_injection == schema::WriteConfig::TitleInjection::per_block )
          {
-            CharReservoir<char, inline_buffer_size> reservoir{ buf };
+            CharReservoir<char, buffer_size> reservoir{ buf };
             title_format_.render( reservoir, metadata );
             reservoir.drain( );
             buf->sputc( '\n' );
