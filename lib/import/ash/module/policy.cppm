@@ -66,7 +66,7 @@ export namespace ash::policy
       static constexpr auto dispatch_timing = DispatchTiming::deferred;
       static constexpr auto retention_policy = RetentionPolicy::wine;
       static constexpr size_t pool_size = 64;
-      static constexpr size_t inline_buffer_size = 204;
+      static constexpr size_t inline_buffer_size = 0; // Setting this value to 0 defaults to the optimal Message size.
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr deferred;
 }

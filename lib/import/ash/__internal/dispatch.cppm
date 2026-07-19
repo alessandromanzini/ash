@@ -15,16 +15,20 @@ namespace ash::detail
 {
    /**
     * A fully rendered log record: metadata plus the formatted body, held in a fixed inline buffer.
-    * @note
+    * @note Aligned to \c std::hardware_destructive_interference_size to avoid false sharing.
+    * @note This costs nothing as long as \p N is chosen so the record lands on a multiple of the interference size... the header (metadata + flags)
+    *       occupies 52 bytes and \p N = 204 by default, which yields exactly 256.
     */
-   template <size_t N> struct alignas( 64 ) Message
+   template <size_t N = 204> struct alignas( std::hardware_destructive_interference_size ) Message
    {
+      static constexpr size_t capacity = N;
+
       schema::WriteMetadata metadata;
       bool truncated;
       uint16_t body_len;
       char body[N];
    };
-   static_assert( std::is_trivially_copyable_v<Message<1>>, "Message must be trivially copyable." );
+   static_assert( std::is_trivially_copyable_v<Message<>>, "Message must be trivially copyable." );
 
    /**
     * Render \p fmt + \p args into the contiguous \p dst. Writing into a raw buffer keeps std::format on libc++'s direct (non-allocating) output
@@ -102,7 +106,8 @@ namespace ash::detail
       static_assert( P::retention_policy == policy::RetentionPolicy::wine, "Deferred Dispatcher only supports 'wine' retention policy." );
       static_assert( P::overflow_policy == policy::OverflowPolicy::truncate, "Deferred Dispatcher only supports 'truncate' overflow policy." );
 
-      using message_type = Message<P::inline_buffer_size>;
+      static constexpr size_t message_size = P::inline_buffer_size == 0 ? Message<>::capacity : P::inline_buffer_size;
+      using message_type = Message<message_size>;
 
    public:
       explicit Dispatcher( schema::WriteConfig config ) noexcept
@@ -141,9 +146,9 @@ namespace ash::detail
       schema::WriteConfig const config_;
 
       std::array<message_type, P::pool_size> ring_{};
-      std::atomic<size_t> head_{ 0 };       // Consumer-owned read index (monotonic) -> read by the producer for fullness
-      std::atomic<size_t> tail_{ 0 };       // Producer-owned write index (monotonic) -> read by the consumer for availability
-      std::atomic<uint32_t> doorbell_{ 0 }; // Bumped + notified on publish and on stop
+      std::atomic<size_t> head_{ 0 }; // monotonic write by PRODUCER, read by CONSUMER
+      std::atomic<size_t> tail_{ 0 }; // monotonic write by CONSUMER, read by PRODUCER
+      std::atomic<uint32_t> doorbell_{ 0 };
       std::atomic_flag stop_token_{};
 
       std::thread worker_{ [this] { run( ); } };
@@ -192,7 +197,7 @@ namespace ash::detail
             while ( head != tail )
             {
                message_type const& slot = slot_at( head );
-               writer.emit<P::inline_buffer_size>( slot.metadata, std::string_view{ slot.body, slot.body_len } );
+               writer.emit<message_size>( slot.metadata, std::string_view{ slot.body, slot.body_len } );
                ++head;
             }
             //
