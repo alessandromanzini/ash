@@ -303,7 +303,7 @@ namespace ash::ui
 
    [[nodiscard]] auto to_ns_color( theme::Color color ) noexcept -> NSColor*
    {
-      auto const uint_to_float = []( uint8_t channel ) { return static_cast<CGFloat>( channel ) / UINT8_MAX; };
+      auto const uint_to_float = []( std::uint8_t channel ) { return static_cast<CGFloat>( channel ) / UINT8_MAX; };
       return [NSColor colorWithRed:uint_to_float( color.r )
                              green:uint_to_float( color.g )
                               blue:uint_to_float( color.b )
@@ -496,7 +496,7 @@ namespace ash::ui
       //
       for ( NSInteger i = 0; i < static_cast<NSInteger>( choices.size( ) ); ++i )
       {
-         NSButton* b = make_button( choices[static_cast<size_t>( i )].label.data( ), i );
+         NSButton* b = make_button( choices[static_cast<std::size_t>( i )].label.data( ), i );
          b.translatesAutoresizingMaskIntoConstraints = NO;
          [b.widthAnchor constraintEqualToConstant:kButtonWidth].active = YES;
          [row addArrangedSubview:b];
@@ -622,7 +622,7 @@ namespace ash::ui
 
 namespace ash::detail
 {
-   auto open_modal( ModalRequest const& request ) noexcept -> size_t
+   auto open_modal( ModalRequest const& request ) noexcept -> std::size_t
    {
       using namespace ui;
       //
@@ -633,7 +633,7 @@ namespace ash::detail
       auto const max_w = static_cast<CGFloat>( request.max_width );
       auto const min_w = static_cast<CGFloat>( request.min_width );
       //
-      size_t const choices_count = request.choices.size( );
+      std::size_t const choices_count = request.choices.size( );
       CGFloat const buttons_w =
         static_cast<CGFloat>( choices_count ) * kButtonWidth + static_cast<CGFloat>( choices_count - 1U ) * kSpacing + kPadding * 2.0;
       //
@@ -707,7 +707,7 @@ namespace ash::detail
       [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
       [panel makeKeyAndOrderFront:nil];
       [panel makeKeyWindow];
-      auto const selection = static_cast<size_t>( [NSApp runModalForWindow:panel] );
+      auto const selection = static_cast<std::size_t>( [NSApp runModalForWindow:panel] );
       [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
       //
       return selection;

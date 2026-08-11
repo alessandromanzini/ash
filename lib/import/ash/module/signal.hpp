@@ -11,7 +11,7 @@ namespace ash
    /**
     * \p Signal is an enumeration that represents degree of importance of the data it is linked to.
     */
-   enum class Signal : uint8_t {
+   enum class Signal : std::uint8_t {
       trace = 0, // For granular execution detail.
       debug,     // For debugging utility.
       info,      // For general information.

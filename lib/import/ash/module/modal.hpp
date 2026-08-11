@@ -14,8 +14,8 @@ namespace ash
     */
    namespace style
    {
-      enum class Font : uint8_t { normal, bold, italic };
-      enum class TextAlignment : uint8_t { left, center, right, justified };
+      enum class Font : std::uint8_t { normal, bold, italic };
+      enum class TextAlignment : std::uint8_t { left, center, right, justified };
    }
 
    /**
@@ -59,15 +59,15 @@ namespace ash
    struct Choice
    {
       std::string_view label;
-      uint8_t token = UINT8_MAX;
-      enum class Tag : uint8_t { none, master, cancel } tag = Tag::none;
+      std::uint8_t token = UINT8_MAX;
+      enum class Tag : std::uint8_t { none, master, cancel } tag = Tag::none;
 
-      [[nodiscard]] static auto as_master( std::string_view const label, uint8_t const token = UINT8_MAX ) noexcept -> Choice
+      [[nodiscard]] static auto as_master( std::string_view const label, std::uint8_t const token = UINT8_MAX ) noexcept -> Choice
       {
          return { .label = label, .token = token, .tag = Tag::master };
       }
 
-      [[nodiscard]] static auto as_cancel( std::string_view const label, uint8_t const token = UINT8_MAX ) noexcept -> Choice
+      [[nodiscard]] static auto as_cancel( std::string_view const label, std::uint8_t const token = UINT8_MAX ) noexcept -> Choice
       {
          return { .label = label, .token = token, .tag = Tag::cancel };
       }
@@ -86,15 +86,15 @@ namespace ash
          std::span<Description const> descriptions;
          std::span<Choice const> choices;
 
-         size_t master_choice;
+         std::size_t master_choice;
          bool has_cancel;
-         size_t cancel_choice;
+         std::size_t cancel_choice;
 
          float max_width;
          float min_width;
       };
 
-      ASH_EXPORT [[nodiscard]] auto open_modal( ModalRequest const& request ) noexcept -> size_t;
+      ASH_EXPORT [[nodiscard]] auto open_modal( ModalRequest const& request ) noexcept -> std::size_t;
    }
 }
 

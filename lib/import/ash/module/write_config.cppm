@@ -46,7 +46,7 @@ export namespace ash::schema
       /// Controls how often the title is (re-)injected into the output.
       /// - `none`: the title is never written.
       /// - `per_block`: the title is written once at the start of each entry.
-      enum class TitleInjection : uint8_t { none, per_block };
+      enum class TitleInjection : std::uint8_t { none, per_block };
 
       /// Stream used for regular (informational) log output.
       std::reference_wrapper<std::ostream> log_stream = std::clog;
@@ -67,13 +67,13 @@ export namespace ash::schema
    struct WriteOptions
    {
       /// Maximum number of times the originating call site may emit.
-      std::optional<uint32_t> echo;
+      std::optional<std::uint32_t> echo;
       std::source_location where;
    };
 
    struct WriteMetadata // TODO: identifier
    {
-      using sequence_id_type = uint32_t;
+      using sequence_id_type = std::uint32_t;
 
       sequence_id_type sequence_id;
       Signal signal;
@@ -87,7 +87,7 @@ export namespace ash::schema
    };
 }
 
-export namespace ash::schema
+export namespace ash::schema // TODO: move to time
 {
    /**
     * Runtime-selectable precision for the fixed "HH[:MM[:SS[.x]]]" renderer.

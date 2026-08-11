@@ -7,8 +7,8 @@ export module ash:config;
 
 export namespace ash::cfg
 {
-   enum class PlatformType : uint8_t { unknown = 0, apple, windows, linux_os, ps4, ps5, switch_os, xbox_one };
-   enum class CompilerType : uint8_t { clang, msvc, gnu };
+   enum class PlatformType : std::uint8_t { unknown = 0, apple, windows, linux_os, ps4, ps5, switch_os, xbox_one };
+   enum class CompilerType : std::uint8_t { clang, msvc, gnu };
 }
 
 export namespace ash::cfg
