@@ -80,7 +80,7 @@ export namespace ash
 
       auto open( ) noexcept -> Choice
       {
-         size_t const selected = detail::open_modal(
+         std::size_t const selected = detail::open_modal(
            {
               .title = title_,
               .signal = signal_,
@@ -105,13 +105,13 @@ export namespace ash
       std::optional<float> min_width_;
       Signal signal_ = Signal::info;
 
-      static constexpr size_t max_accessories_count_ = 6U;
+      static constexpr std::size_t max_accessories_count_ = 6U;
       std::array<Description, max_accessories_count_> descriptions_{}; // use inplace_vector
       std::array<Choice, max_accessories_count_> choices_{};
 
-      uint8_t descriptions_count_ = 0U;
-      uint8_t choices_count_ = 0U;
-      std::optional<uint8_t> master_choice_;
-      std::optional<uint8_t> cancel_choice_;
+      std::uint8_t descriptions_count_ = 0U;
+      std::uint8_t choices_count_ = 0U;
+      std::optional<std::uint8_t> master_choice_;
+      std::optional<std::uint8_t> cancel_choice_;
    };
 }

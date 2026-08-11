@@ -47,7 +47,7 @@ export namespace ash
     * @tparam CharT Character type for the internal buffer and output stream.
     * @tparam N Size of the internal scratch buffer.
     */
-   template <typename CharT, size_t N> class CharReservoir final
+   template <typename CharT, std::size_t N> class CharReservoir final
    {
    public:
       static_assert( N > 0, "The CharReservoir's buffer must be assigned a size." );
@@ -83,7 +83,7 @@ export namespace ash
             else
             {
                // ... adjust the view to fit the scratch buffer and mark overflowed.
-               view.remove_suffix( view.size( ) - static_cast<size_t>( remaining ) );
+               view.remove_suffix( view.size( ) - static_cast<std::size_t>( remaining ) );
                overflow_ = true;
             }
          }

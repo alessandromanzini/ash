@@ -42,9 +42,9 @@ export namespace ash::policy
  */
 export namespace ash::policy
 {
-   enum class DispatchTiming : uint8_t { direct, deferred };
-   enum class RetentionPolicy : uint8_t { milk /* Discard oldest. */, wine /* Discard newest. */ };
-   enum class OverflowPolicy : uint8_t { truncate, send_to_heap };
+   enum class DispatchTiming : std::uint8_t { direct, deferred };
+   enum class RetentionPolicy : std::uint8_t { milk /* Discard oldest. */, wine /* Discard newest. */ };
+   enum class OverflowPolicy : std::uint8_t { truncate, send_to_heap };
 
    struct Direct
    {
@@ -53,8 +53,8 @@ export namespace ash::policy
 
       static constexpr auto dispatch_timing = DispatchTiming::direct;
       static constexpr auto retention_policy = RetentionPolicy::wine;
-      static constexpr size_t pool_size = 0;
-      static constexpr size_t inline_buffer_size = 512;
+      static constexpr std::size_t pool_size = 0;
+      static constexpr std::size_t inline_buffer_size = 512;
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr direct;
 
@@ -65,8 +65,8 @@ export namespace ash::policy
 
       static constexpr auto dispatch_timing = DispatchTiming::deferred;
       static constexpr auto retention_policy = RetentionPolicy::wine;
-      static constexpr size_t pool_size = 64;
-      static constexpr size_t inline_buffer_size = 0; // Setting this value to 0 defaults to the optimal Message size.
+      static constexpr std::size_t pool_size = 64;
+      static constexpr std::size_t inline_buffer_size = 0; // Setting this value to 0 defaults to the optimal Message size.
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr deferred;
 }
@@ -94,7 +94,7 @@ export namespace ash::traits
       { P::dispatch_timing } -> std::convertible_to<policy::DispatchTiming>;
       { P::retention_policy } -> std::convertible_to<policy::RetentionPolicy>;
       { P::overflow_policy } -> std::convertible_to<policy::OverflowPolicy>;
-      { P::pool_size } -> std::convertible_to<size_t>;
-      { P::inline_buffer_size } -> std::convertible_to<size_t>;
+      { P::pool_size } -> std::convertible_to<std::size_t>;
+      { P::inline_buffer_size } -> std::convertible_to<std::size_t>;
    };
 }
