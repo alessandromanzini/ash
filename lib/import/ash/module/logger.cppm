@@ -21,7 +21,7 @@ namespace ash::detail
     */
    struct SourceLocationCmpEq
    {
-      [[nodiscard]] auto operator( )( std::source_location const& lhs, std::source_location const& rhs ) const noexcept -> bool
+      [[nodiscard]] inline auto operator( )( std::source_location const& lhs, std::source_location const& rhs ) const noexcept -> bool
       {
          return lhs.line( ) == rhs.line( ) && lhs.column( ) == rhs.column( ) &&
                 ( lhs.file_name( ) == rhs.file_name( ) || std::string_view{ lhs.file_name( ) } == rhs.file_name( ) );
@@ -36,11 +36,11 @@ namespace ash::detail
  */
 template <> struct std::hash<std::source_location>
 {
-   [[nodiscard]] auto operator( )( std::source_location const& loc ) const noexcept -> size_t
+   [[nodiscard]] inline auto operator( )( std::source_location const& loc ) const noexcept -> std::size_t
    {
       // Fibonacci (golden ratio) multiplicative hash over the packed line/column pair.
-      uint64_t const packed = static_cast<uint64_t>( loc.line( ) ) << 32 | loc.column( );
-      return static_cast<size_t>( packed * 0x9E37'79B9'7F4A'7C15ULL );
+      std::uint64_t const packed = static_cast<std::uint64_t>( loc.line( ) ) << 32 | loc.column( );
+      return static_cast<std::size_t>( packed * 0x9E37'79B9'7F4A'7C15ULL );
    }
 };
 
@@ -105,8 +105,7 @@ export namespace ash
     * @note Streams referenced by \p WriteConfig must remain valid for the entire lifetime of \p Logger, including any deferred writes still pending
     *       on the worker thread at destruction time.
     *
-    * @note Deferred dispatch becomes mostly valuable when titles and bodies are difficult to process (long and/or format-heavy). The price of worker
-    *       thread synchronization might be overkill if that prior condition is not met.
+    * @note Choosing between \p policy::Direct and \p policy::Deferred trades delivery guarantees for caller latency; see their documentation.
     *
     * @tparam AccessPolicy   Policy controlling synch vs unsynch access.
     * @tparam DispatchPolicy Policy controlling direct vs deferred dispatch.
@@ -135,7 +134,7 @@ export namespace ash
 
       auto once( std::source_location loc = std::source_location::current( ) ) noexcept { return make_operator( { .echo = 1, .where = loc } ); }
 
-      auto at_most( uint32_t cap, std::source_location loc = std::source_location::current( ) ) noexcept
+      auto at_most( std::uint32_t cap, std::source_location loc = std::source_location::current( ) ) noexcept
       {
          return make_operator( { .echo = cap, .where = loc } );
       }
@@ -151,26 +150,29 @@ export namespace ash
       [[no_unique_address]] AccessPolicy access_policy_;
       [[no_unique_address]] DispatchPolicy dispatch_policy_;
 
-      std::unordered_map<std::source_location, uint32_t, std::hash<std::source_location>, detail::SourceLocationCmpEq> echo_counts_{};
+      std::unordered_map<std::source_location, std::uint32_t, std::hash<std::source_location>, detail::SourceLocationCmpEq> echo_counts_{};
 
-      detail::Dispatcher<DispatchPolicy> dispatcher_;
+      Dispatcher<DispatchPolicy> dispatcher_;
       schema::WriteMetadata::sequence_id_type sequence_id_ = 0;
 
       struct Filter
       {
          Signal signal = Signal::trace;
-         enum class Op : uint8_t { eq, lt, lt_eq, gt, gt_eq } order = Op::gt_eq;
-      } filter_{};
+         enum class Op : std::uint8_t { eq, lt, lt_eq, gt, gt_eq } order = Op::gt_eq;
+      };
+      static_assert( std::atomic<Filter>::is_always_lock_free, "Filter must stay small enough for a lock-free atomic." );
+
+      // Atomic because it is read before entering the access gate, so the filtered-out path never pays for the lock.
+      std::atomic<Filter> filter_{ Filter{} };
 
       auto make_operator( schema::WriteOptions const& options ) noexcept
       {
-         // Fmt is either a std::format_string<Args...> (format overloads) or a std::string_view (pre-rendered overloads).
          return LoggerOperator{ [this, options]<typename Fmt, typename... Args>( Signal sig, Fmt fmt, Args&&... args ) {
             if ( not can_dispatch( sig ) )
             {
                return;
             }
-            //
+
             access_policy_.gate( [&, sig, fmt] {
                // Consume the echo inside the gate so the count mutation is covered by the access policy. std::source_location does not have
                // collisions, but the same location can be accessed by different threads, therefore we need to sync.
@@ -178,13 +180,14 @@ export namespace ash
                {
                   return;
                }
-               //
+
                // In case of a deferred dispatcher, we must guarantee the SPSC CONTRACT ...
                // A. UNSYNC access policy: we only ever access the engine from the same thread, no issues here.
                // B. SYNC access policy: the gate mutex ensures the contract.
                schema::WriteMetadata const metadata{
                   .sequence_id = sequence_id_++, .signal = sig, .identity = "TEST", .timestamp = std::chrono::system_clock::now( ), .options = options
                };
+
                dispatcher_.dispatch( metadata, fmt, std::forward<Args>( args )... );
             } );
          } };
@@ -197,7 +200,7 @@ export namespace ash
        */
       [[nodiscard]] CBR_NO_INLINE auto consume_echo( schema::WriteOptions const& options ) noexcept -> bool
       {
-         uint32_t& used = echo_counts_[options.where];
+         std::uint32_t& used = echo_counts_[options.where];
          if ( used >= options.echo.value( ) )
          {
             return false;
@@ -208,12 +211,12 @@ export namespace ash
 
       auto set_filter( Signal signal, Filter::Op order ) noexcept -> void
       {
-         access_policy_.gate( [this, signal, order] { filter_ = { .signal = signal, .order = order }; } );
+         filter_.store( { .signal = signal, .order = order }, std::memory_order_relaxed );
       }
 
       [[nodiscard]] auto can_dispatch( Signal sig ) noexcept -> bool
       {
-         switch ( auto const [signal, order] = filter_; order )
+         switch ( auto const [signal, order] = filter_.load( std::memory_order_relaxed ); order )
          {
             case Filter::Op::eq   : return sig == signal;
             case Filter::Op::lt   : return sig < signal;

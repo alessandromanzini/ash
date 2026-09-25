@@ -6,265 +6,289 @@ module;
 
 export module ash:format;
 
-import :reservoir;
-
 import :format_flags;
+import :reservoir;
 import :signal;
 import :time;
-import :write_config;
 
 
-export namespace ash
+namespace ash::detail
 {
    /**
-    * The \p FormatBundle represents a string format and args as a single packet, making it easier to pass it around along with other optional and
-    * variadic parameters.
-    * @tparam TArgs
+    * Deliberately not constexpr: reaching it while a title is parsed aborts constant evaluation, and the compiler reports the call, \p reason
+    * included, as the error.
     */
-   template <typename... TArgs> struct FormatBundle
-   {
-      static constexpr bool empty_args = sizeof...( TArgs ) == 0U;
-
-      std::format_string<TArgs...> fmt;
-      std::tuple<std::decay_t<TArgs>...> args;
-
-      constexpr FormatBundle( std::format_string<TArgs...> fmt, TArgs&&... args ) noexcept
-         : fmt{ fmt }
-         , args{ std::forward<TArgs>( args )... }
-      { }
-
-      [[nodiscard]] constexpr auto format( ) const noexcept -> std::string
-      {
-         if constexpr ( not empty_args )
-         {
-            return std::apply(
-              [this]( auto const&... fmt_args ) -> auto { return std::vformat( fmt.get( ), std::make_format_args( fmt_args... ) ); }, args );
-         }
-         else
-         {
-            return std::string{ fmt.get( ) };
-         }
-      }
-
-      template <std::output_iterator<char const&> TStrIterator> constexpr auto format_to( TStrIterator it ) const noexcept -> TStrIterator
-      {
-         if constexpr ( not empty_args )
-         {
-            return std::apply(
-              [&]( auto const&... fmt_args ) -> auto { return std::vformat_to( it, fmt.get( ), std::make_format_args( fmt_args... ) ); }, args );
-         }
-         else
-         {
-            return std::copy( fmt.get( ).begin( ), fmt.get( ).end( ), it );
-         }
-      }
-   };
-
-   template <typename... TArgs> [[nodiscard]] auto format( std::format_string<TArgs...> fmt, TArgs&&... args ) noexcept -> FormatBundle<TArgs...>
-   {
-      return FormatBundle<TArgs...>{ fmt, std::forward<TArgs>( args )... };
-   }
+   inline auto invalid_format( char const* /*reason*/ ) noexcept -> void { }
 }
 
 namespace ash::detail
 {
    /**
-    * A compiled title segment.
+    * One parsed piece of a title: either literal text, or a keyword expanded from the entry's metadata.
     */
    struct Field
    {
-      enum class Kind : uint8_t { literal, signal, identity, path, line, column, function, quick_time, generic_time } kind;
-      std::string_view verbatim{};
-      std::string owned{};
-      FormatFlags specs{};
-      schema::HmsPrecision precision{};
+      enum class Kind : std::uint8_t { literal, signal, identity, path, line, column, function, time_quick, time_generic };
+
+      Kind kind{ Kind::literal };
+      std::string_view text{}; // literal: the verbatim text; time_generic: the chrono spec.
+      FormatFlags signal_flags{};
+      time::HmsPrecision precision{};
    };
 
-   [[nodiscard]] inline auto parse( std::string_view token ) noexcept -> std::optional<Field>
+   // Longest chrono spec that still fits the render-time "{:spec}" scratch buffer.
+   constexpr std::size_t max_time_spec_length{ 61 };
+
+   [[nodiscard]] consteval auto parse_signal( std::string_view spec ) -> Field
    {
-      size_t const colon = token.find( ':' );
+      FormatFlags flags{};
+      for ( char const flag : spec )
+      {
+         switch ( flag )
+         {
+            case 'u': flags.uppercase = true; break;
+            case 's': flags.representation = FormatFlags::Repr::shorthand; break;
+            default : invalid_format( "SIG spec only accepts u and s." );
+         }
+      }
+      return { .kind = Field::Kind::signal, .signal_flags = flags };
+   }
+
+   [[nodiscard]] consteval auto parse_time( std::string_view spec ) -> Field
+   {
+      std::string_view const time_spec = spec.empty( ) ? "%H:%M:%S" : spec;
+      //
+      // hms-shaped specs dispatch to the quick table renderer, everything else is forwarded to the chrono formatter.
+      if ( std::optional<time::HmsPrecision> const precision = time::parse_hms_spec( time_spec ); precision.has_value( ) )
+      {
+         return { .kind = Field::Kind::time_quick, .precision = precision.value( ) };
+      }
+      if ( time_spec.size( ) > max_time_spec_length )
+      {
+         invalid_format( "TIME spec is too long" );
+      }
+      return { .kind = Field::Kind::time_generic, .text = time_spec };
+   }
+
+   /**
+    * Parse the content of one "{KEYWORD[:spec]}" token, braces excluded.
+    */
+   [[nodiscard]] consteval auto parse_field( std::string_view token ) -> Field
+   {
+      std::size_t const colon = token.find( ':' );
       std::string_view const name = token.substr( 0, colon );
       std::string_view const spec = colon == std::string_view::npos ? std::string_view{} : token.substr( colon + 1 );
       //
+      // 1. Keywords that accept a spec.
       if ( name == "SIG" )
       {
-         FormatFlags flags{};
-         for ( char const flag : spec )
-         {
-            switch ( flag )
-            {
-               case 'u': flags.uppercase = true; break;
-               case 's': flags.representation = FormatFlags::Repr::shorthand; break;
-               default : break;
-            }
-         }
-         return Field{ .kind = Field::Kind::signal, .specs = flags };
-      }
-      if ( name == "ID" )
-      {
-         return Field{ .kind = Field::Kind::identity };
-      }
-      if ( name == "PATH" )
-      {
-         return Field{ .kind = Field::Kind::path };
-      }
-      if ( name == "LINE" )
-      {
-         return Field{ .kind = Field::Kind::line };
-      }
-      if ( name == "COLUMN" )
-      {
-         return Field{ .kind = Field::Kind::column };
-      }
-      if ( name == "FUNCTION" )
-      {
-         return Field{ .kind = Field::Kind::function };
+         return parse_signal( spec );
       }
       if ( name == "TIME" )
       {
-         std::string_view const time_spec = spec.empty( ) ? "%H:%M:%S" : spec;
-         //
-         // hms-shaped specs dispatch to the quick table renderer, otherwise forwarded to the generic formatter.
-         if ( std::optional<schema::HmsPrecision> const precision = schema::parse_hms_spec( time_spec ); precision.has_value( ) )
-         {
-            return Field{ .kind = Field::Kind::quick_time, .precision = precision.value( ) };
-         }
-         return Field{ .kind = Field::Kind::generic_time, .owned = std::format( "{{:{}}}", time_spec ) };
+         return parse_time( spec );
       }
-      return std::nullopt;
-   }
-
-   template <typename ClockT, std::invocable<std::string_view> V>
-   auto visit_hms( schema::HmsPrecision precision, std::chrono::time_point<ClockT> timestamp, V&& visitor ) -> void
-   {
-      switch ( precision )
+      //
+      // 2. Keywords that do not.
+      struct Keyword
       {
-         case schema::HmsPrecision::hrs  : visitor( time::render_hms<std::chrono::hours>( timestamp ).view( ) ); break;
-         case schema::HmsPrecision::min  : visitor( time::render_hms<std::chrono::minutes>( timestamp ).view( ) ); break;
-         case schema::HmsPrecision::sec  : visitor( time::render_hms<std::chrono::seconds>( timestamp ).view( ) ); break;
-         case schema::HmsPrecision::milli: visitor( time::render_hms<std::chrono::milliseconds>( timestamp ).view( ) ); break;
-         case schema::HmsPrecision::micro: visitor( time::render_hms<std::chrono::microseconds>( timestamp ).view( ) ); break;
-         default                         : std::unreachable( );
+         std::string_view name;
+         Field::Kind kind;
+      };
+      constexpr std::array keywords{
+         Keyword{       "ID", Field::Kind::identity },
+         Keyword{     "PATH",     Field::Kind::path },
+         Keyword{     "LINE",     Field::Kind::line },
+         Keyword{   "COLUMN",   Field::Kind::column },
+         Keyword{ "FUNCTION", Field::Kind::function },
+      };
+      for ( auto const& [keyword, kind] : keywords )
+      {
+         if ( name == keyword )
+         {
+            if ( colon != std::string_view::npos )
+            {
+               invalid_format( "Keyword does not take a spec." );
+            }
+            return { .kind = kind };
+         }
       }
+      invalid_format( "Unknown keyword." );
+      return {};
    }
+}
+
+export namespace ash::schema
+{
+   struct WriteOptions
+   {
+      /// Maximum number of times the originating call site may emit.
+      std::optional<std::uint32_t> echo;
+      std::source_location where;
+   };
+
+   /**
+    * Per-entry information captured at the call site, consumed by the title renderer.
+    */
+   struct WriteMetadata // TODO: identifier
+   {
+      using sequence_id_type = std::uint32_t;
+
+      sequence_id_type sequence_id;
+      Signal signal;
+
+      /// @warning Deferred dispatch copies this view (not the bytes) into the ring, where it is read later by the worker thread. The referenced
+      ///          storage must therefore outlive the logger (e.g. a string literal or other static storage).
+      std::string_view identity;
+
+      std::chrono::system_clock::time_point timestamp;
+      WriteOptions options;
+   };
 }
 
 export namespace ash
 {
    /**
-    * @brief A pre-compiled title representation for quick formatting.
+    * @brief A log title, parsed at compile time into fields that are expanded from each entry's metadata.
     *
-    * @note Assumes \c fmt view stays alive for the whole \p CompiledFormat lifetime.
+    * Like \c std::format_string, it is built implicitly from a string literal, and a malformed title is a compile error rather than a surprise in the
+    * output. Literal text is kept as views into the literal, so rendering is a walk over the fields with no parsing left.
+    *
+    * Supported keywords:
+    *  - `{TIME}`     — Timestamp of the entry, formatted using `std::chrono` format specs (e.g. `{TIME:%H:%M:%S}`). It is recommended to use the
+    *                   quick table specs below, any other chrono spec is supported but processed significantly slower:
+    *                    - "HH"
+    *                    - "HH:MM"
+    *                    - "HH:MM:SS"
+    *                    - "HH:MM:SS.mmm"
+    *                    - "HH:MM:SS.uuuuuu"
+    *                    - "%H:%M:%S" (default)
+    *  - `{SIG}`      — Severity level of the entry. `{SIG:u}` for uppercase, `{SIG:s}` for shorthand; flags can be combined (`{SIG:us}`).
+    *  - `{ID}`       — Identifier of the entry.
+    *  - `{PATH}`     — Source file path of the call site.
+    *  - `{LINE}`     — Source line number of the call site.
+    *  - `{COLUMN}`   — Source column number of the call site.
+    *  - `{FUNCTION}` — Enclosing function name of the call site.
+    *
+    * @note Keywords and specs are case-sensitive. Use "{{" and "}}" for literal braces.
     */
-   class CompiledFormat final
+   class Format final
    {
    public:
-      CompiledFormat( ) = default;
-      CBR_FORCE_INLINE explicit CompiledFormat( std::string_view fmt ) noexcept { compile( fmt ); }
+      static constexpr std::size_t max_fields{ 32 };
 
-      template <size_t N> CBR_FORCE_INLINE auto render( CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata ) const -> void
+      // Implicit by design, so a string literal can be assigned wherever a title is expected.
+      template <typename S> requires std::convertible_to<S const&, std::string_view>
+      consteval Format( S const& source )
       {
-         // ReSharper disable once CppUseStructuredBinding
-         for ( auto const& field : fields_ )
+         compile( source );
+      }
+
+      template <std::size_t N> auto render( CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata ) const -> void
+      {
+         using Kind = detail::Field::Kind;
+         //
+         for ( auto const& [kind, text, signal_flags, precision] : std::span{ fields_.data( ), field_count_ } )
          {
-            switch ( field.kind )
+            switch ( kind )
             {
-               case detail::Field::Kind::literal : reservoir.pour( field.verbatim ); break;
-               case detail::Field::Kind::signal  : reservoir.pour( reflection::to_string( metadata.signal, field.specs ) ); break;
-               case detail::Field::Kind::identity: reservoir.pour( metadata.identity ); break;
-               case detail::Field::Kind::path    : reservoir.pour( std::string_view{ metadata.options.where.file_name( ) } ); break;
-               case detail::Field::Kind::line    : reservoir.pour( metadata.options.where.line( ) ); break;
-               case detail::Field::Kind::column  : reservoir.pour( metadata.options.where.column( ) ); break;
-               case detail::Field::Kind::function: reservoir.pour( std::string_view{ metadata.options.where.function_name( ) } ); break;
+               case Kind::literal     : reservoir.pour( text ); break;
+               case Kind::signal      : reservoir.pour( reflection::to_string( metadata.signal, signal_flags ) ); break;
+               case Kind::identity    : reservoir.pour( metadata.identity ); break;
+               case Kind::path        : reservoir.pour( std::string_view{ metadata.options.where.file_name( ) } ); break;
+               case Kind::line        : reservoir.pour( metadata.options.where.line( ) ); break;
+               case Kind::column      : reservoir.pour( metadata.options.where.column( ) ); break;
+               case Kind::function    : reservoir.pour( std::string_view{ metadata.options.where.function_name( ) } ); break;
 
-               case detail::Field::Kind::quick_time:
-                  detail::visit_hms( field.precision, metadata.timestamp, [&]( std::string_view hms ) { reservoir.pour( hms ); } );
-                  break;
+               case Kind::time_quick  : time::visit_hms( precision, metadata.timestamp, [&]( std::string_view hms ) { reservoir.pour( hms ); } ); break;
 
-               case detail::Field::Kind::generic_time:
-                  std::vformat_to( reservoir.inserter( ), field.owned, std::make_format_args( metadata.timestamp ) );
-                  break;
+               case Kind::time_generic: render_generic_time( reservoir, text, metadata.timestamp ); break;
 
-               default: std::unreachable( );
+               default                : std::unreachable( );
             }
          }
       }
 
    private:
-      std::vector<detail::Field> fields_{};
+      std::array<detail::Field, max_fields> fields_{};
+      std::size_t field_count_{ 0 };
 
-      auto compile( std::string_view fmt ) noexcept -> void
+      consteval auto compile( std::string_view fmt ) -> void
       {
-         size_t literal_index = 0;
-         size_t literal_length = 0;
+         std::size_t literal_begin{ 0 };
+         std::size_t cursor{ 0 };
          //
-         auto const append_literal = [&]( size_t index, size_t amount = 1 ) {
-            if ( literal_length == 0 )
+         while ( cursor < fmt.size( ) )
+         {
+            char const c = fmt[cursor];
+            //
+            // 1. Plain character: keep growing the current literal run.
+            if ( c != '{' && c != '}' )
             {
-               literal_index = index;
-               literal_length = amount;
+               ++cursor;
+               continue;
             }
+            //
+            // 2. Escaped brace ("{{" or "}}"): close the literal run including a single brace, then skip both.
+            if ( cursor + 1 < fmt.size( ) && fmt[cursor + 1] == c )
+            {
+               push_literal( fmt.substr( literal_begin, cursor + 1 - literal_begin ) );
+               cursor += 2;
+            }
+            // 3. Keyword: close the literal run, then parse the "{KEYWORD[:spec]}" token.
             else
             {
-               literal_length += amount;
-            }
-         };
-         auto const flush_literal = [&] {
-            if ( literal_length > 0 )
-            {
-               fields_.push_back( detail::Field{ .kind = detail::Field::Kind::literal, .verbatim = fmt.substr( literal_index, literal_length ) } );
-               literal_length = 0;
-            }
-         };
-         //
-         // For every character in the format string ...
-         for ( size_t char_index = 0; char_index < fmt.size( ); )
-         {
-            char const c = fmt[char_index];
-            //
-            // 1. Escaped braces: {{ and }}. Collapse to a single literal brace.
-            if ( bool const is_double_brace = ( c == '{' || c == '}' ) && char_index + 1 < fmt.size( ) && fmt[char_index + 1] == c; is_double_brace )
-            {
-               append_literal( char_index, 2 );
-            }
-            // 2. Opening brace (guaranteed to be single) ...
-            else if ( c == '{' )
-            {
-               // ... query for the ending brace and ...
-               size_t const close = fmt.find( '}', char_index + 1 );
+               push_literal( fmt.substr( literal_begin, cursor - literal_begin ) );
                //
-               // ... if it doesn't exist, keep the remainder as literal text, ...
+               if ( c == '}' )
+               {
+                  detail::invalid_format( "Unmatched }." );
+               }
+               std::size_t const close = fmt.find( '}', cursor + 1 );
                if ( close == std::string_view::npos )
                {
-                  append_literal( char_index, fmt.size( ) - char_index );
-                  break;
+                  detail::invalid_format( "Missing } after keyword." );
                }
-               //
-               // ... otherwise parse its content into a segment. Also flush the literals collected thus far.
-               size_t const substr_begin_index = char_index + 1;
-               std::string_view const token = fmt.substr( substr_begin_index, close - char_index - 1 );
-               if ( std::optional<detail::Field> field = detail::parse( token ); field.has_value( ) )
-               {
-                  flush_literal( );
-                  fields_.push_back( field.value( ) );
-               }
-               else
-               {
-                  // If the field was unknown, keep it verbatim, braces included, so the typo is visible in the output.
-                  append_literal( substr_begin_index, token.size( ) );
-               }
-               char_index = close + 1;
+               push( detail::parse_field( fmt.substr( cursor + 1, close - cursor - 1 ) ) );
+               cursor = close + 1;
             }
-            // 3. Default case: push to literal space.
-            else
-            {
-               append_literal( char_index );
-               ++char_index;
-            }
+            literal_begin = cursor;
          }
          //
-         // Finally flush any residue literals.
-         flush_literal( );
+         // 4. Trailing literal run.
+         push_literal( fmt.substr( literal_begin ) );
+      }
+
+      consteval auto push( detail::Field const& field ) -> void
+      {
+         if ( field_count_ == max_fields )
+         {
+            detail::invalid_format( "Too many fields." );
+         }
+         fields_[field_count_++] = field;
+      }
+
+      consteval auto push_literal( std::string_view text ) -> void
+      {
+         if ( not text.empty( ) )
+         {
+            push( { .kind = detail::Field::Kind::literal, .text = text } );
+         }
+      }
+
+      /**
+       * The chrono formatter only takes a full replacement field, so the spec is wrapped as "{:spec}" in a stack buffer first.
+       */
+      template <std::size_t N>
+      static auto render_generic_time( CharReservoir<char, N>& reservoir, std::string_view spec, std::chrono::system_clock::time_point timestamp )
+        -> void
+      {
+         std::array<char, detail::max_time_spec_length + 3> fmt{ '{', ':' };
+         auto const spec_end = std::ranges::copy( spec, std::next( fmt.begin( ), 2 ) ).out;
+         *spec_end = '}';
+         //
+         std::string_view const replacement_field{ fmt.data( ), spec.size( ) + 3 };
+         std::vformat_to( reservoir.inserter( ), replacement_field, std::make_format_args( timestamp ) );
       }
    };
 }

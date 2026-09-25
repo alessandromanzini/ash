@@ -46,6 +46,16 @@ export namespace ash::policy
    enum class RetentionPolicy : std::uint8_t { milk /* Discard oldest. */, wine /* Discard newest. */ };
    enum class OverflowPolicy : std::uint8_t { truncate, send_to_heap };
 
+   /**
+    * @brief Formats and writes on the calling thread, before the log call returns.
+    *
+    * Prefer it when every entry must reach the sink:
+    *  - Nothing is ever dropped; a slow sink slows the caller down instead.
+    *  - Entries are written before a crash or abort, which makes it the safe choice for error and fatal paths.
+    *  - Output stays ordered with any other writes to the same streams, and is visible immediately while debugging.
+    *  - No worker thread, no ring buffer, and any type with a \c std::formatter can be logged (no \c traits::Codec needed).
+    *  - Cheaper overall when logging is sparse, cores are scarce, or many loggers coexist.
+    */
    struct Direct
    {
       struct dispatch_policy_tag
@@ -58,6 +68,18 @@ export namespace ash::policy
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr direct;
 
+   /**
+    * @brief Copies the arguments into a ring buffer on the calling thread; a worker thread formats and writes them later.
+    *
+    * Prefer it when the caller's latency matters more than delivery, e.g. a game loop or a request handler logging in bursts: the caller only pays
+    * for the argument copy, and the formatting cost moves to the worker.
+    *
+    * @warning Entries are dropped without notice once the ring is full ('wine' retention), so sustained logging is capped by the worker's
+    *          throughput. Entries still queued are lost if the process crashes or aborts.
+    * @note Entries can be written after unrelated output that happened later on the same streams.
+    * @note Every argument type needs a \c traits::Codec specialization.
+    * @note When logging is sparse the worker sleeps between entries, and each entry pays for waking it up.
+    */
    struct Deferred
    {
       struct dispatch_policy_tag

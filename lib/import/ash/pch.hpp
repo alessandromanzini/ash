@@ -6,6 +6,7 @@
 #include <array>
 #include <atomic>
 #include <cassert>
+#include <charconv>
 #include <chrono>
 #include <concepts>
 #include <condition_variable>
