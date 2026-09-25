@@ -78,7 +78,7 @@ namespace ash::detail
    /**
     * Two decimals table ranging from "00" to "99".
     */
-   constexpr auto two_digit_table = [] {
+   inline constexpr auto two_digit_table = [] {
       std::array<char, 200> table{};
       for ( std::size_t i = 0; i < 100; ++i )
       {
@@ -165,5 +165,62 @@ export namespace ash::time
       //
       assert( cursor == repr.end( ) && "render_hms: rendered characters must match TimeString::repr_length!" );
       return repr;
+   }
+}
+
+export namespace ash::time
+{
+   /**
+    * Runtime-selectable precision for the fixed "HH[:MM[:SS[.x]]]" renderer.
+    */
+   enum class HmsPrecision : std::uint8_t { hrs, min, sec, milli, micro };
+
+   struct HmsMapping
+   {
+      std::string_view spec;
+      HmsPrecision precision;
+   };
+
+   constexpr auto hms_map = [] {
+      return std::array{
+         HmsMapping{              "HH",   HmsPrecision::hrs },
+         HmsMapping{           "HH:MM",   HmsPrecision::min },
+         HmsMapping{        "HH:MM:SS",   HmsPrecision::sec },
+         HmsMapping{    "HH:MM:SS.mmm", HmsPrecision::milli },
+         HmsMapping{ "HH:MM:SS.uuuuuu", HmsPrecision::micro },
+         HmsMapping{        "%H:%M:%S",   HmsPrecision::sec },
+      };
+   }( );
+
+   /**
+    * @return The quick-table precision matching \p spec, or \c std::nullopt when the spec needs the generic chrono formatter.
+    */
+   [[nodiscard]] constexpr auto parse_hms_spec( std::string_view spec ) noexcept -> std::optional<HmsPrecision>
+   {
+      for ( auto const& [candidate, precision] : hms_map )
+      {
+         if ( spec == candidate )
+         {
+            return precision;
+         }
+      }
+      return std::nullopt;
+   }
+
+   /**
+    * Renders \p timestamp at the runtime-selected \p precision and hands the resulting view to \p visitor.
+    */
+   template <typename Clock, typename Duration, std::invocable<std::string_view> V>
+   auto visit_hms( HmsPrecision precision, std::chrono::time_point<Clock, Duration> timestamp, V&& visitor ) -> void
+   {
+      switch ( precision )
+      {
+         case HmsPrecision::hrs  : visitor( render_hms<std::chrono::hours>( timestamp ).view( ) ); break;
+         case HmsPrecision::min  : visitor( render_hms<std::chrono::minutes>( timestamp ).view( ) ); break;
+         case HmsPrecision::sec  : visitor( render_hms<std::chrono::seconds>( timestamp ).view( ) ); break;
+         case HmsPrecision::milli: visitor( render_hms<std::chrono::milliseconds>( timestamp ).view( ) ); break;
+         case HmsPrecision::micro: visitor( render_hms<std::chrono::microseconds>( timestamp ).view( ) ); break;
+         default                 : std::unreachable( );
+      }
    }
 }

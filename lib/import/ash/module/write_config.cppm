@@ -4,43 +4,14 @@ module;
 
 export module ash:write_config;
 
-import :signal;
+import :format;
 
 
 export namespace ash::schema
 {
    /**
-   * @brief Configuration for a stream writer.
-   *
-   * @note The \p title_format support certain keywords to inject information while writing.
-   *       Below, the list of keywords:
-   *
-   *       - `{TIME}`      — Timestamp of write request, formatted using `std::chrono` format specs (e.g. `{TIME:%H:%M:%S}`).
-   *                         If no spec is given, a default representation is used. It is recommended to use the quick table specs defined as follows:
-   *                          - "HH"
-   *                          - "HH:MM"
-   *                          - "HH:MM:SS"
-   *                          - "HH:MM:SS.mmm"
-   *                          - "HH:MM:SS.uuuuuu"
-   *                          - "%H:%M:%S" (default)
-   *                         Any other standard library format spec is supported, but will be processed significantly slower.
-   *
-   *       - `{SIG}`       — Severity level of the entry. Supports a case modifier:
-   *                         `{SIG:u}` for uppercase, `{SIG:s}` for shorthand version; omitting the spec uses the level's default casing and length.
-   *
-   *       - `{ID}`        — Unique identifier of the entry.
-   *
-   *       - `{PATH}`      — Source file path of the call site.
-   *
-   *       - `{LINE}`      — Source line number of the call site.
-   *
-   *       - `{COLUMN}`    — Source column number of the call site.
-   *
-   *       - `{FUNCTION}`  — Enclosing function name of the call site.
-   *
-   * @note Keywords and specs are case-sensitive and must appear exactly as `{KEYWORD}` or `{KEYWORD:spec}`; unrecognized keywords are left unexpanded
-   *       in the output.
-   */
+    * @brief Configuration for a stream writer.
+    */
    struct WriteConfig
    {
       /// Controls how often the title is (re-)injected into the output.
@@ -57,69 +28,10 @@ export namespace ash::schema
       /// Determines when @ref title_format is expanded and written.
       TitleInjection title_injection = TitleInjection::per_block;
 
-      /// Format string for the injected title; see the keyword list above.
-      std::string title_format = "[{TIME:%H:%M:%S}] [{SIG:u}] [{ID}] at {PATH}:{LINE}:{COLUMN}";
+      /// Title written before each entry, parsed at compile time; see \p Format for the supported keywords.
+      Format title_format = "[{TIME:%H:%M:%S}] [{SIG:u}] [{ID}] at {PATH}:{LINE}:{COLUMN}";
 
       /// Content appended after each write (e.g. block separator).
       std::string trailer_content = "\n\n";
    };
-
-   struct WriteOptions
-   {
-      /// Maximum number of times the originating call site may emit.
-      std::optional<std::uint32_t> echo;
-      std::source_location where;
-   };
-
-   struct WriteMetadata // TODO: identifier
-   {
-      using sequence_id_type = std::uint32_t;
-
-      sequence_id_type sequence_id;
-      Signal signal;
-
-      /// @warning Deferred dispatch copies this view (not the bytes) into the ring, where it is read later by the worker thread. The referenced
-      ///          storage must therefore outlive the logger (e.g. a string literal or other static storage).
-      std::string_view identity;
-
-      std::chrono::system_clock::time_point timestamp;
-      WriteOptions options;
-   };
-}
-
-export namespace ash::schema // TODO: move to time
-{
-   /**
-    * Runtime-selectable precision for the fixed "HH[:MM[:SS[.x]]]" renderer.
-    */
-   enum class HmsPrecision : std::uint8_t { hrs, min, sec, milli, micro };
-
-   struct HmsMapping
-   {
-      std::string_view spec;
-      HmsPrecision precision;
-   };
-
-   constexpr auto hms_map = [] {
-      return std::array{
-         HmsMapping{              "HH",   HmsPrecision::hrs },
-         HmsMapping{           "HH:MM",   HmsPrecision::min },
-         HmsMapping{        "HH:MM:SS",   HmsPrecision::sec },
-         HmsMapping{    "HH:MM:SS.mmm", HmsPrecision::milli },
-         HmsMapping{ "HH:MM:SS.uuuuuu", HmsPrecision::micro },
-         HmsMapping{        "%H:%M:%S",   HmsPrecision::sec },
-      };
-   }( );
-
-   [[nodiscard]] constexpr auto parse_hms_spec( std::string_view spec ) noexcept -> std::optional<HmsPrecision>
-   {
-      for ( auto const& [candidate, precision] : hms_map )
-      {
-         if ( spec == candidate )
-         {
-            return precision;
-         }
-      }
-      return std::nullopt;
-   }
 }

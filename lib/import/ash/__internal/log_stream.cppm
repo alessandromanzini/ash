@@ -4,7 +4,7 @@ module;
 
 #include <ash/cbridge.hpp>
 
-export module ash:writer;
+export module ash:log_stream;
 
 import :format;
 import :policy;
@@ -20,24 +20,22 @@ export namespace ash
     *
     * @note Title formatting is optimized by compiling the title format rather than using a generalized \c std::format call.
     */
-   class Writer final
+   class LogStream final
    {
    public:
-      explicit Writer( schema::WriteConfig config ) noexcept
+      inline explicit LogStream( schema::WriteConfig config ) noexcept
          : config_{ std::move( config ) }
-      {
-         title_format_ = CompiledFormat{ config_.title_format };
-      }
+      { }
 
-      template <size_t buffer_size>
-      CBR_FORCE_INLINE auto emit( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
+      template <std::size_t buffer_size>
+      CBR_FORCE_INLINE auto write( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
       {
          std::streambuf* const buf = select_stream( metadata.signal ).rdbuf( );
          //
          if ( config_.title_injection == schema::WriteConfig::TitleInjection::per_block )
          {
             CharReservoir<char, buffer_size> reservoir{ buf };
-            title_format_.render( reservoir, metadata );
+            config_.title_format.render( reservoir, metadata );
             reservoir.drain( );
             buf->sputc( '\n' );
          }
@@ -48,7 +46,6 @@ export namespace ash
 
    private:
       schema::WriteConfig const config_;
-      CompiledFormat title_format_;
 
       /**
        * Route log stream and err stream depending on the input signal.
