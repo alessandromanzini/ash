@@ -5,7 +5,9 @@ cmake_minimum_required( VERSION 4.0 )
 project( ash
          VERSION 0.1.0
          DESCRIPTION "A modern C++ error handling library."
-         LANGUAGES CXX )
+         LANGUAGES CXX OBJCXX )
+#
+set( ${PROJECT_NAME}_NAMESPACE ${PROJECT_NAME} )
 #
 #
 # ========================================
@@ -58,16 +60,16 @@ message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 #
 if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
     #
-    set( CBRIDGE_SRC "clang_cbridge.cpp" )
+    set( CBRIDGE_SRC_FILENAME "clang_cbridge.cpp" )
     #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
     #
-    set( CBRIDGE_SRC "gnu_cbridge.cpp" )
+    set( CBRIDGE_SRC_FILENAME "gnu_cbridge.cpp" )
     #
 elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
     #
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP" ) # Enable parallel compilation on MSVC.
-    set( CBRIDGE_SRC "msvc_cbridge.cpp" )
+    set( CBRIDGE_SRC_FILENAME "msvc_cbridge.cpp" )
     #
 else()
     #
@@ -81,7 +83,7 @@ message( STATUS "Using ${CMAKE_CXX_COMPILER_ID} compiler configuration." )
 # OUTPUT DIRECTORIES
 # ========================================
 #
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/build" )
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" )
 #
@@ -89,7 +91,7 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" )
 foreach( OUTPUT_CONFIG ${CMAKE_CONFIGURATION_TYPES} )
     #
     string( TOUPPER ${OUTPUT_CONFIG} OUTPUT_CONFIG )
-    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/bin" )
+    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/build" )
     set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     #
