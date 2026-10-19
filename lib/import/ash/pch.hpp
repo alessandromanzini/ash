@@ -39,7 +39,5 @@
 #include <variant>
 #include <vector>
 
-#include <ash/config/export.hpp>
-
 
 #endif //!ASH_PCH_HPP
