@@ -2,10 +2,17 @@ module;
 
 #include <ash/pch.hpp>
 
+#include <ash/__internal/clock.hpp>
 #include <ash/cbridge.hpp>
 
 export module ash:time;
 
+
+export namespace ash::time
+{
+   using time::TickAnchor;
+   using time::TickClock;
+}
 
 namespace ash::detail
 {
