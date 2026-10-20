@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="600" viewBox="0 0 860 600" role="img" aria-label="Caller-side latency per log call, bursty workload">
+<rect width="860" height="600" fill="#313540"/>
+<text x="44.0" y="64.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="3.4" style="font-variant-numeric: tabular-nums">CALLER-SIDE LATENCY</text>
+<text x="816.0" y="64.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="800" fill="#9da1ad" text-anchor="end" letter-spacing="1.6" style="font-variant-numeric: tabular-nums">NANOSECONDS PER LOG CALL · LOWER IS BETTER</text>
+<text x="44.0" y="88.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#9da1ad" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">Bursty workload: 32-call bursts with 200 µs idle gaps · median per call</text>
+<text x="176.0" y="138.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="2.6" style="font-variant-numeric: tabular-nums">INTEGERS</text>
+<text x="399.3" y="138.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="2.6" style="font-variant-numeric: tabular-nums">FLOATS</text>
+<text x="622.7" y="138.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="2.6" style="font-variant-numeric: tabular-nums">STRINGS</text>
+<rect x="30" y="189.0" width="800" height="38" rx="9" fill="#611c22"/>
+<rect x="30" y="397.0" width="800" height="38" rx="9" fill="#611c22"/>
+<line x1="176.0" x2="176.0" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="176.0" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 ns</text>
+<line x1="224.3" x2="224.3" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="224.3" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">10</text>
+<line x1="272.7" x2="272.7" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="272.7" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">100</text>
+<line x1="321.0" x2="321.0" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="321.0" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 µs</text>
+<line x1="369.3" x2="369.3" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="369.3" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="end" letter-spacing="0" style="font-variant-numeric: tabular-nums">10 µs</text>
+<line x1="399.3" x2="399.3" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="399.3" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 ns</text>
+<line x1="447.7" x2="447.7" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="447.7" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">10</text>
+<line x1="496.0" x2="496.0" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="496.0" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">100</text>
+<line x1="544.3" x2="544.3" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="544.3" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 µs</text>
+<line x1="592.7" x2="592.7" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="592.7" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="end" letter-spacing="0" style="font-variant-numeric: tabular-nums">10 µs</text>
+<line x1="622.7" x2="622.7" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="622.7" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 ns</text>
+<line x1="671.0" x2="671.0" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="671.0" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">10</text>
+<line x1="719.3" x2="719.3" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="719.3" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">100</text>
+<line x1="767.7" x2="767.7" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="767.7" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="middle" letter-spacing="0" style="font-variant-numeric: tabular-nums">1 µs</text>
+<line x1="816.0" x2="816.0" y1="160" y2="488" stroke="#f0f0ef" stroke-opacity="0.12" stroke-width="1"/>
+<text x="816.0" y="508.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="500" fill="#9da1ad" text-anchor="end" letter-spacing="0" style="font-variant-numeric: tabular-nums">10 µs</text>
+<text x="44.0" y="174.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="800" fill="#9da1ad" text-anchor="start" letter-spacing="2.2" style="font-variant-numeric: tabular-nums">ASYNC</text>
+<text x="44.0" y="212.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">ash deferred</text>
+<line x1="176.0" x2="369.3" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="210.6" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="210.6" cy="208.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="220.6" y="212.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">5.2 ns</text>
+<line x1="399.3" x2="592.7" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="427.9" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="427.9" cy="208.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="437.9" y="212.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">3.9 ns</text>
+<line x1="622.7" x2="816.0" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="671.8" y1="208.0" y2="208.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="671.8" cy="208.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="681.8" y="212.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">10.4 ns</text>
+<text x="44.0" y="256.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">quill</text>
+<line x1="176.0" x2="369.3" y1="252.0" y2="252.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="210.6" y1="252.0" y2="252.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="210.6" cy="252.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="220.6" y="256.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">5.2 ns</text>
+<line x1="399.3" x2="592.7" y1="252.0" y2="252.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="433.9" y1="252.0" y2="252.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="433.9" cy="252.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="443.9" y="256.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">5.2 ns</text>
+<line x1="622.7" x2="816.0" y1="252.0" y2="252.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="690.0" y1="252.0" y2="252.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="690.0" cy="252.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="700.0" y="256.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">24.7 ns</text>
+<text x="44.0" y="300.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">fmtlog</text>
+<line x1="176.0" x2="369.3" y1="296.0" y2="296.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="252.2" y1="296.0" y2="296.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="252.2" cy="296.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="262.2" y="300.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">37.8 ns</text>
+<line x1="399.3" x2="592.7" y1="296.0" y2="296.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="475.6" y1="296.0" y2="296.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="475.6" cy="296.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="485.6" y="300.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">37.8 ns</text>
+<line x1="622.7" x2="816.0" y1="296.0" y2="296.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="699.6" y1="296.0" y2="296.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="699.6" cy="296.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="709.6" y="300.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">39.1 ns</text>
+<text x="44.0" y="344.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">spdlog async</text>
+<line x1="176.0" x2="369.3" y1="340.0" y2="340.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="313.7" y1="340.0" y2="340.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="313.7" cy="340.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="323.7" y="344.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">706 ns</text>
+<line x1="399.3" x2="592.7" y1="340.0" y2="340.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="547.0" y1="340.0" y2="340.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="547.0" cy="340.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="557.0" y="344.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">1.14 µs</text>
+<line x1="622.7" x2="816.0" y1="340.0" y2="340.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="751.5" y1="340.0" y2="340.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="751.5" cy="340.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="761.5" y="344.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">464 ns</text>
+<text x="44.0" y="382.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10" font-weight="800" fill="#9da1ad" text-anchor="start" letter-spacing="2.2" style="font-variant-numeric: tabular-nums">SYNC</text>
+<text x="44.0" y="420.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">ash direct</text>
+<line x1="176.0" x2="369.3" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="306.0" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="306.0" cy="416.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="316.0" y="420.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">488 ns</text>
+<line x1="399.3" x2="592.7" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="541.1" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="541.1" cy="416.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="551.1" y="420.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">857 ns</text>
+<line x1="622.7" x2="816.0" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.1" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="750.6" y1="416.0" y2="416.0" stroke="#f0f0ef" stroke-opacity="0.75" stroke-width="2" stroke-linecap="round"/>
+<circle cx="750.6" cy="416.0" r="6" fill="#f0f0ef" stroke="#611c22" stroke-width="2"/>
+<text x="760.6" y="420.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#f0f0ef" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">444 ns</text>
+<text x="44.0" y="464.5" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">spdlog sync</text>
+<line x1="176.0" x2="369.3" y1="460.0" y2="460.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="176.0" x2="318.8" y1="460.0" y2="460.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="318.8" cy="460.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="328.8" y="464.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">902 ns</text>
+<line x1="399.3" x2="592.7" y1="460.0" y2="460.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="399.3" x2="553.2" y1="460.0" y2="460.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="553.2" cy="460.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="563.2" y="464.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">1.52 µs</text>
+<line x1="622.7" x2="816.0" y1="460.0" y2="460.0" stroke="#f0f0ef" stroke-opacity="0.07" stroke-width="8" stroke-linecap="round"/>
+<line x1="622.7" x2="765.3" y1="460.0" y2="460.0" stroke="#9da1ad" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+<circle cx="765.3" cy="460.0" r="5" fill="#9da1ad" stroke="#313540" stroke-width="2"/>
+<text x="775.3" y="464.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#c6c8ce" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">894 ns</text>
+<line x1="44" x2="816" y1="538" y2="538" stroke="#f0f0ef" stroke-opacity="0.12"/>
+<text x="44.0" y="562.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#9da1ad" text-anchor="start" letter-spacing="0" style="font-variant-numeric: tabular-nums">Apple Silicon Mac · clang 22.1.8 · -O3 · 20,000 bursts per case · output to /dev/null</text>
+<text x="816.0" y="562.0" font-family="'Mark Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" font-weight="400" fill="#9da1ad" text-anchor="end" letter-spacing="0" style="font-variant-numeric: tabular-nums">spdlog 1.17 · quill 13.1 · fmtlog</text>
+</svg>
