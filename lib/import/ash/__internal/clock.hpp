@@ -20,7 +20,7 @@ namespace ash::time
    {
       using repr = std::uint64_t;
 
-      ASH_EXPORT [[nodiscard]] static auto now( ) noexcept -> repr;
+      [[nodiscard]] ASH_API static auto now( ) noexcept -> repr;
       // { standard lib version (slow)
       //    return static_cast<repr>( std::chrono::steady_clock::now( ).time_since_epoch( ).count( ) );
       // }
@@ -28,7 +28,7 @@ namespace ash::time
       /**
        * @return Ticks per second.
        */
-      ASH_EXPORT [[nodiscard]] static auto frequency( ) noexcept -> repr;
+      [[nodiscard]] ASH_API static auto frequency( ) noexcept -> repr;
       // { standard lib version (slow)
       //    using period = std::chrono::steady_clock::period;
       //    return static_cast<repr>( period::den / period::num );

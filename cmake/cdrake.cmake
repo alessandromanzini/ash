@@ -18,7 +18,7 @@ cmake_minimum_required( VERSION 3.29 )
 #
 set( CDRK_VERSION_MAJOR 1 )
 set( CDRK_VERSION_MINOR 3 )
-set( CDRK_VERSION_PATCH 3 )
+set( CDRK_VERSION_PATCH 4 )
 set( CDRK_VERSION "${CDRK_VERSION_MAJOR}.${CDRK_VERSION_MINOR}.${CDRK_VERSION_PATCH}" )
 #
 set( CDRK_REPOSITORY "alessandromanzini/cdrake" )
@@ -320,11 +320,13 @@ endfunction()
 # scripts/private/add_library_target.cmake
 # ----------------------------------------
 #
-# _cdrk_target_export_api( <TARGET_NAME> <EXPORT_MACRO> <STATIC|BUILD|IMPORT> )
+# _cdrk_inject_target_api( <TARGET_NAME> <API_MACRO> <STATIC|BUILD|IMPORT> )
 #
-# Defines EXPORT_MACRO on TARGET_NAME: empty for STATIC, symbol export while compiling
+# Defines API_MACRO on TARGET_NAME: empty for STATIC, symbol export while compiling
 # the target for BUILD, symbol import for its consumers for IMPORT.
-function( _cdrk_target_export_api TARGET_NAME EXPORT_MACRO MODE )
+#
+# This also sets hidden symbol visibility by default for cross-platform uniformity.
+function( _cdrk_inject_target_api TARGET_NAME API_MACRO MODE )
     #
     # 1. Pick the export/import attributes for the current platform.
     if( WIN32 OR CYGWIN )
@@ -339,29 +341,29 @@ function( _cdrk_target_export_api TARGET_NAME EXPORT_MACRO MODE )
         #
     else()
         #
-        message( FATAL_ERROR "${TARGET_NAME}: cannot define ${EXPORT_MACRO}, unsupported compiler '${CMAKE_CXX_COMPILER_ID}'!" )
+        message( FATAL_ERROR "${TARGET_NAME}: cannot define ${API_MACRO}, unsupported compiler '${CMAKE_CXX_COMPILER_ID}'!" )
         #
     endif()
     #
     # 2. Define the macro: empty for static, export while building, import for consumers.
     if( MODE STREQUAL "STATIC" )
         #
-        target_compile_definitions( "${TARGET_NAME}" PUBLIC "${EXPORT_MACRO}=" )
+        target_compile_definitions( "${TARGET_NAME}" PUBLIC "${API_MACRO}=" )
         #
     elseif( MODE STREQUAL "BUILD" )
         #
-        target_compile_definitions( "${TARGET_NAME}" PRIVATE "${EXPORT_MACRO}=${EXPORT_ATTRIBUTE}" )
+        target_compile_definitions( "${TARGET_NAME}" PRIVATE "${API_MACRO}=${EXPORT_ATTRIBUTE}" )
         set_target_properties( "${TARGET_NAME}" PROPERTIES
                                CXX_VISIBILITY_PRESET hidden
                                VISIBILITY_INLINES_HIDDEN ON )
         #
     elseif( MODE STREQUAL "IMPORT" )
         #
-        target_compile_definitions( "${TARGET_NAME}" INTERFACE "${EXPORT_MACRO}=${IMPORT_ATTRIBUTE}" )
+        target_compile_definitions( "${TARGET_NAME}" INTERFACE "${API_MACRO}=${IMPORT_ATTRIBUTE}" )
         #
     else()
         #
-        message( FATAL_ERROR "_cdrk_target_export_api: unknown mode '${MODE}'!" )
+        message( FATAL_ERROR "_cdrk_inject_target_api: unknown mode '${MODE}'!" )
         #
     endif()
     #
@@ -372,16 +374,16 @@ endfunction()
 # Adds the library targets, see cdrk_module. OUT_SOURCE_TARGET receives the target compiling
 # the sources (the object library for LIBRARY), OUT_LINK_TARGETS the targets to link against.
 #
-# The export macro is injected in the target with the following format: <MACRO_TAG>_EXPORT
+# The export macro is injected in the target with the following format: <MACRO_TAG>_API
 function( _cdrk_add_library_target LIB_TYPE MACRO_TAG TARGET_NAME OUT_SOURCE_TARGET OUT_LINK_TARGETS )
     #
-    string( TOUPPER "${MACRO_TAG}_EXPORT" EXPORT_MACRO )
-    string( MAKE_C_IDENTIFIER "${EXPORT_MACRO}" EXPORT_MACRO )
+    string( TOUPPER "${MACRO_TAG}_API" API_MACRO )
+    string( MAKE_C_IDENTIFIER "${API_MACRO}" API_MACRO )
     #
     if( LIB_TYPE STREQUAL "STATIC" )
         #
         add_library( "${TARGET_NAME}" STATIC )
-        _cdrk_target_export_api( "${TARGET_NAME}" "${EXPORT_MACRO}" STATIC )
+        _cdrk_inject_target_api( "${TARGET_NAME}" "${API_MACRO}" STATIC )
         #
         set( SOURCE_TARGET "${TARGET_NAME}" )
         set( LINK_TARGETS "${TARGET_NAME}" )
@@ -389,8 +391,8 @@ function( _cdrk_add_library_target LIB_TYPE MACRO_TAG TARGET_NAME OUT_SOURCE_TAR
     elseif( LIB_TYPE STREQUAL "SHARED" )
         #
         add_library( "${TARGET_NAME}" SHARED )
-        _cdrk_target_export_api( "${TARGET_NAME}" "${EXPORT_MACRO}" BUILD )
-        _cdrk_target_export_api( "${TARGET_NAME}" "${EXPORT_MACRO}" IMPORT )
+        _cdrk_inject_target_api( "${TARGET_NAME}" "${API_MACRO}" BUILD )
+        _cdrk_inject_target_api( "${TARGET_NAME}" "${API_MACRO}" IMPORT )
         #
         set( SOURCE_TARGET "${TARGET_NAME}" )
         set( LINK_TARGETS "${TARGET_NAME}" )
@@ -404,16 +406,16 @@ function( _cdrk_add_library_target LIB_TYPE MACRO_TAG TARGET_NAME OUT_SOURCE_TAR
         # so users can link to either without building twice. PIC is needed by the shared one.
         add_library( "${OBJECT_TARGET}" OBJECT )
         set_target_properties( "${OBJECT_TARGET}" PROPERTIES POSITION_INDEPENDENT_CODE ON )
-        _cdrk_target_export_api( "${OBJECT_TARGET}" "${EXPORT_MACRO}" BUILD )
+        _cdrk_inject_target_api( "${OBJECT_TARGET}" "${API_MACRO}" BUILD )
         #
         # Add static/shared library targets and link them against object.
         add_library( "${STATIC_TARGET}" STATIC )
         target_link_libraries( "${STATIC_TARGET}" PUBLIC "${OBJECT_TARGET}" )
-        _cdrk_target_export_api( "${STATIC_TARGET}" "${EXPORT_MACRO}" STATIC )
+        _cdrk_inject_target_api( "${STATIC_TARGET}" "${API_MACRO}" STATIC )
         #
         add_library( "${TARGET_NAME}" SHARED )
         target_link_libraries( "${TARGET_NAME}" PUBLIC "${OBJECT_TARGET}" )
-        _cdrk_target_export_api( "${TARGET_NAME}" "${EXPORT_MACRO}" IMPORT )
+        _cdrk_inject_target_api( "${TARGET_NAME}" "${API_MACRO}" IMPORT )
         #
         # Both share the output name, except on Windows where the static and import libraries would clash as <name>.lib.
         if( NOT WIN32 )

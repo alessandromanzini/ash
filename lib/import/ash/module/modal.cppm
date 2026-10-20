@@ -24,7 +24,7 @@ export namespace ash
    /**
     * A \p Modal is a builder class used to open an OS specific panel with customizable descriptions and outputs.
     */
-   class Modal final
+   class ASH_API Modal final
    {
    public:
       explicit Modal( std::string_view title ) noexcept
