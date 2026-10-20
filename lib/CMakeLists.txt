@@ -5,11 +5,10 @@
 # TARGET CONFIGURATION
 # ========================================
 #
-# todo: ASH_ENABLE_EXCEPTIONS and ASH_ENABLE_RTTI
 cdrk_module( ${PROJECT_NAME} LIBRARY
              INCLUDE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/import"
              SOURCE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/source"
-             STRICT_ARGS "$<$<CONFIG:Debug>:-g3>" )
+             STRICT_ARGS ${ASH_COMPILER_SETTINGS} )
 #
 # Glob all project files:
 # 1. Module interface units.
