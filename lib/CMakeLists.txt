@@ -17,11 +17,16 @@ cdrk_module_sources( "${MODULE_TARGET}" MODULES "*.cppm" )
 # 2. Shared source files.
 # cdrk_module_sources( "${MODULE_TARGET}" SOURCES "${MODULE_SRC_DIR}/shared/*.cpp" )
 #
-# 3. Apple Obj-C. We also disable pedantic on these files cause they behave differently.
+# 3a. Apple Obj-C. We also disable pedantic on these files cause they behave differently.
 cdrk_module_sources( "${MODULE_TARGET}"
                      FRAMEWORKS "Cocoa"
                      SOURCES "platform/darwin/*.mm"
                      NO_PEDANTIC
+                     IF APPLE )
+#
+# 3b. Apple source files.3
+cdrk_module_sources( "${MODULE_TARGET}"
+                     SOURCES "platform/darwin/*.cpp"
                      IF APPLE )
 #
 # 4. Win32 source files.

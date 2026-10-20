@@ -29,7 +29,7 @@ option( ASH_ENABLE_RTTI "Enable rtti for ash target." OFF )
 #
 # option( ASH_IMPORT_UNIT_TEST "Import unit test target." ON )
 #
-# Set the compiler settings given the user options.
+# Set the compiler settings from the given user options.
 set( ASH_COMPILER_SETTINGS "$<$<CONFIG:Debug>:-g3>" )
 if( ${ASH_ENABLE_EXCEPTIONS} )
     #

@@ -1,55 +1,21 @@
 module;
 
-#include <ash/pch.hpp>
+#include <ash/config/config.hpp>
 
 export module ash:config;
 
 
 export namespace ash::cfg
 {
-   enum class PlatformType : std::uint8_t { unknown = 0, apple, windows, linux_os, ps4, ps5, switch_os, xbox_one };
-   enum class CompilerType : std::uint8_t { clang, msvc, gnu };
+   using cfg::PlatformType;
+   using cfg::CompilerType;
 }
 
 export namespace ash::cfg
 {
-#ifdef NDEBUG
-   inline constexpr bool debug_mode{ false };
-#else
-   inline constexpr bool debug_mode{ true };
-#endif
-
-#ifdef ASH_BUILD_LIB
-   inline constexpr bool lib_level{ true };
-#else
-   inline constexpr bool lib_level{ false };
-#endif
-
-#ifdef __ORBIS__      // PS4
-   inline constexpr auto platform_type = PlatformType::ps4;
-#elifdef __PROSPERO__ // PS5
-   inline constexpr auto platform_type = PlatformType::ps5;
-#elifdef __NX__       // Nintendo Switch
-   inline constexpr auto platform_type = PlatformType::switch_os;
-#elifdef _DURANGO     // Xbox One
-   inline constexpr auto platform_type = PlatformType::xbox_one;
-#elifdef __APPLE__
-   inline constexpr auto platform_type = PlatformType::apple;
-#elifdef _WIN32
-   inline constexpr auto platform_type = PlatformType::windows;
-#elifdef __linux__
-   inline constexpr auto platform_type = PlatformType::linux_os;
-#else
-   inline constexpr auto platform_type = PlatformType::unknown;
-#endif
-
-#ifdef __clang__
-   inline constexpr auto compiler_type = CompilerType::clang;
-#elifdef _MSC_VER
-   inline constexpr auto compiler_type = CompilerType::msvc;
-#elifdef __GNUC__
-   inline constexpr auto compiler_type = CompilerType::gnu;
-#else
-   static_assert( false, "Unknown compiler!" );
-#endif
+   using cfg::debug_mode;
+   using cfg::lib_level;
+   using cfg::platform_type;
+   using cfg::compiler_type;
+   using cfg::arch_type;
 }
