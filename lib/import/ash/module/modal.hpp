@@ -94,7 +94,7 @@ namespace ash
          float min_width;
       };
 
-      [[nodiscard]] ASH_EXPORT auto open_modal( ModalRequest const& request ) noexcept -> std::size_t;
+      [[nodiscard]] ASH_API auto open_modal( ModalRequest const& request ) noexcept -> std::size_t;
    }
 }
 
