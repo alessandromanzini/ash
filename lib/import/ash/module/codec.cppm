@@ -46,8 +46,8 @@ export namespace ash::traits
    {
       using value_type = T;
 
-      static constexpr bool fixed_size = true;
-      static constexpr std::size_t max_serial_size = sizeof( value_type );
+      static constexpr bool fixed_size{ true };
+      static constexpr std::size_t max_serial_size{ sizeof( value_type ) };
 
       [[nodiscard]] static constexpr auto serial_size( value_type ) noexcept -> std::size_t { return max_serial_size; }
 
@@ -73,8 +73,8 @@ namespace ash::traits::detail
 
       using value_type = std::basic_string_view<std::remove_cv_t<C>>;
 
-      static constexpr bool fixed_size = false;
-      static constexpr std::size_t max_serial_size = 255 * sizeof( C );
+      static constexpr bool fixed_size{ false };
+      static constexpr std::size_t max_serial_size{ 255 * sizeof( C ) };
 
       [[nodiscard]] static auto serial_size( value_type view ) noexcept -> std::size_t { return view.size( ) * sizeof( C ); }
 
@@ -138,10 +138,10 @@ namespace ash::traits::detail
       using length_type = length_t<codec_type::max_serial_size>; // header stores the payload size only
 
       // We need a header only if the size is not fixed.
-      static constexpr std::size_t header_size = codec_type::fixed_size != 0 ? sizeof( length_type ) : 0;
+      static constexpr std::size_t header_size{ codec_type::fixed_size != 0 ? sizeof( length_type ) : 0 };
 
       // Bytes that must be reserved no matter the argument value: the whole payload when fixed, the header alone otherwise.
-      static constexpr std::size_t fixed_footprint = codec_type::fixed_size ? codec_type::max_serial_size : header_size;
+      static constexpr std::size_t fixed_footprint{ codec_type::fixed_size ? codec_type::max_serial_size : header_size };
    };
 }
 
@@ -161,7 +161,7 @@ export namespace ash
       template <typename T> using codec_traits_t = traits::detail::CodecTraits<T>;
 
    public:
-      static constexpr std::size_t fixed_footprint = ( std::size_t{} + ... + codec_traits_t<Ts>::fixed_footprint );
+      static constexpr std::size_t fixed_footprint{ ( std::size_t{} + ... + codec_traits_t<Ts>::fixed_footprint ) };
 
       Burner( ) = delete;
 
@@ -172,9 +172,9 @@ export namespace ash
       {
          assert( dst.size( ) >= fixed_footprint && "Destination cannot hold the fixed-size records." );
          //
-         std::size_t cursor = 0;
-         std::size_t budget = dst.size( ) - fixed_footprint;
-         bool truncated = false;
+         std::size_t cursor{ 0 };
+         std::size_t budget{ dst.size( ) - fixed_footprint };
+         bool truncated{ false };
          ( burn_single<Ts>( dst.data( ), cursor, budget, truncated, args ), ... );
          return { cursor, truncated };
       }
@@ -183,7 +183,7 @@ export namespace ash
       static auto feed( std::span<std::byte const> src, F&& f ) noexcept( std::is_nothrow_invocable_v<F, typename codec_traits_t<Ts>::value_type const&...> )
         -> decltype( auto )
       {
-         std::size_t cursor = 0;
+         std::size_t cursor{ 0 };
          //
          // Braced initialization guarantees left-to-right evaluation, so the records are read back in the order they were burnt.
          std::tuple<typename codec_traits_t<Ts>::value_type...> const values{ read<Ts>( src.data( ), cursor )... };
@@ -205,8 +205,8 @@ export namespace ash
          else
          {
             // 1. Clip the payload to both the codec limit and the remaining budget.
-            std::size_t const wanted = codec_t::serial_size( arg );
-            std::size_t const size = std::min( { wanted, codec_t::max_serial_size, budget } );
+            std::size_t const wanted{ codec_t::serial_size( arg ) };
+            std::size_t const size{ std::min( { wanted, codec_t::max_serial_size, budget } ) };
             truncated = truncated || size < wanted;
             budget -= size;
             //
@@ -235,7 +235,7 @@ export namespace ash
             size = header;
          }
          //
-         std::byte const* const payload = src + cursor;
+         std::byte const* const payload{ src + cursor };
          cursor += size;
          return codec_t::deserialize( payload, size );
       }

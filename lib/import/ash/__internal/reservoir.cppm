@@ -61,10 +61,10 @@ export namespace ash
 
       CBR_FORCE_INLINE auto pour( std::string_view view ) noexcept -> void
       {
-         std::size_t const remaining = available( );
+         std::size_t const remaining{ available( ) };
          //
          // 1. Check if the scratch buffer would overflow with this request.
-         if ( bool const scratch_buffer_overflow = std::cmp_greater( view.size( ), remaining ); scratch_buffer_overflow )
+         if ( bool const scratch_buffer_overflow{ std::cmp_greater( view.size( ), remaining ) }; scratch_buffer_overflow )
          {
             // 1a. If a sink is available ...
             if ( sink_ptr_ != nullptr )
@@ -159,9 +159,9 @@ export namespace ash
 
    private:
       std::array<value_type, N> scratch_buffer_;
-      std::size_t scratch_size_ = 0;
-      std::basic_streambuf<value_type>* sink_ptr_ = nullptr;
-      bool overflow_ = false;
+      std::size_t scratch_size_{ 0 };
+      std::basic_streambuf<value_type>* sink_ptr_{ nullptr };
+      bool overflow_{ false };
 
       [[nodiscard]] CBR_FORCE_INLINE auto available( ) const noexcept -> std::size_t { return capacity( ) - scratch_size_; }
       CBR_FORCE_INLINE auto put_in_sink( char const* s, std::streamsize n ) const noexcept -> void { sink_ptr_->sputn( s, n ); }

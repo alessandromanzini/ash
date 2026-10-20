@@ -14,15 +14,15 @@ export namespace ash::cfg
 export namespace ash::cfg
 {
 #ifdef NDEBUG
-   inline constexpr bool debug_mode = false;
+   inline constexpr bool debug_mode{ false };
 #else
-   inline constexpr bool debug_mode = true;
+   inline constexpr bool debug_mode{ true };
 #endif
 
 #ifdef ASH_BUILD_LIB
-   inline constexpr bool lib_level = true;
+   inline constexpr bool lib_level{ true };
 #else
-   inline constexpr bool lib_level = false;
+   inline constexpr bool lib_level{ false };
 #endif
 
 #ifdef __ORBIS__      // PS4

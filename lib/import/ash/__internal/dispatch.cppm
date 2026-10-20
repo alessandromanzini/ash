@@ -28,7 +28,7 @@ namespace ash::detail
     */
    template <std::size_t N = 181> struct alignas( std::hardware_destructive_interference_size ) Message
    {
-      static constexpr std::size_t capacity = N;
+      static constexpr std::size_t capacity{ N };
 
       schema::WriteMetadata metadata;
       render_fn_type render_fn;
@@ -134,11 +134,11 @@ export namespace ash
       static_assert( P::retention_policy == policy::RetentionPolicy::wine, "Deferred Dispatcher only supports 'wine' retention policy." );
       static_assert( P::overflow_policy == policy::OverflowPolicy::truncate, "Deferred Dispatcher only supports 'truncate' overflow policy." );
 
-      static constexpr std::size_t message_size = P::inline_buffer_size == 0 ? detail::Message<>::capacity : P::inline_buffer_size;
+      static constexpr std::size_t message_size{ P::inline_buffer_size == 0 ? detail::Message<>::capacity : P::inline_buffer_size };
       using message_type = detail::Message<message_size>;
 
       // Empty polls the worker spends yielding before it goes to sleep, so a burst does not pay a sleep/wake round trip per message.
-      static constexpr std::size_t idle_spin_limit = 64;
+      static constexpr std::size_t idle_spin_limit{ 64 };
 
    public:
       explicit Dispatcher( schema::WriteConfig config ) noexcept
@@ -198,16 +198,16 @@ export namespace ash
          using burner_type = Burner<Ts...>;
          static_assert( burner_type::fixed_footprint <= message_type::capacity, "Fixed-size arguments exceed the message capacity." );
          //
-         std::size_t const tail = tail_.load( std::memory_order_relaxed );
+         std::size_t const tail{ tail_.load( std::memory_order_relaxed ) };
          //
          // 1. Drop the newest entry if the ring is full (wine retention).
-         if ( bool const pool_congested = std::cmp_equal( tail - head_.load( std::memory_order_acquire ), P::pool_size ); pool_congested )
+         if ( bool const pool_congested{ std::cmp_equal( tail - head_.load( std::memory_order_acquire ), P::pool_size ) }; pool_congested )
          {
             return;
          }
          //
          // 2. Fill the slot, then publish it with a release store on tail_.
-         message_type& slot = slot_at( tail );
+         message_type& slot{ slot_at( tail ) };
          {
             auto const [written, truncated] = burner_type::burn( slot.body, args... );
             slot.body_len = static_cast<std::uint16_t>( written );
@@ -263,10 +263,10 @@ export namespace ash
             //
             // 4. Announce sleep, then re-check the ring before blocking (pairs with the fence in stage()). The ticket is snapshotted first, so a ring
             //    racing this check still wakes the wait.
-            std::uint32_t const ticket = doorbell_.load( std::memory_order_acquire );
+            std::uint32_t const ticket{ doorbell_.load( std::memory_order_acquire ) };
             sleeping_.store( true, std::memory_order_relaxed );
             std::atomic_thread_fence( std::memory_order_seq_cst );
-            if ( bool const pool_drained = head_.load( std::memory_order_relaxed ) == tail_.load( std::memory_order_relaxed );
+            if ( bool const pool_drained{ head_.load( std::memory_order_relaxed ) == tail_.load( std::memory_order_relaxed ) };
                  pool_drained && not is_stop_requested( ) )
             {
                doorbell_.wait( ticket, std::memory_order_acquire );
@@ -282,12 +282,12 @@ export namespace ash
        */
       auto drain( LogStream const& stream, std::string& scratch ) noexcept -> std::size_t
       {
-         std::size_t const first = head_.load( std::memory_order_relaxed );
-         std::size_t const tail = tail_.load( std::memory_order_acquire );
+         std::size_t const first{ head_.load( std::memory_order_relaxed ) };
+         std::size_t const tail{ tail_.load( std::memory_order_acquire ) };
          //
-         for ( std::size_t head = first; head != tail; ++head )
+         for ( std::size_t head{ first }; head != tail; ++head )
          {
-            message_type const& slot = slot_at( head );
+            message_type const& slot{ slot_at( head ) };
             slot.render_fn( scratch, slot.fmt, { slot.body, slot.body_len } );
             stream.write<message_size>( slot.metadata, scratch );
          }

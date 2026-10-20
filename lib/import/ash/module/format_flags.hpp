@@ -8,8 +8,8 @@ namespace ash
 {
    struct FormatFlags
    {
-      enum class Repr : std::uint8_t { full, shorthand } representation : 7 = Repr::full;
-      bool uppercase : 1 = false;
+      enum class Repr : std::uint8_t { full, shorthand } representation : 7 { Repr::full };
+      bool uppercase : 1 { false };
    };
 }
 

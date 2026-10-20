@@ -30,7 +30,7 @@ export namespace ash
       template <std::size_t buffer_size>
       CBR_FORCE_INLINE auto write( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
       {
-         std::streambuf* const buf = select_stream( metadata.signal ).rdbuf( );
+         std::streambuf* const buf{ select_stream( metadata.signal ).rdbuf( ) };
          //
          if ( config_.title_injection == schema::WriteConfig::TitleInjection::per_block )
          {
