@@ -12,24 +12,24 @@
 
 namespace ash::ui
 {
-   constexpr CGFloat kPadding = 24.0;
-   constexpr CGFloat kTitleHeightOffset = 18.0;
-   constexpr CGFloat kSignalIconSize = 11.0;
-   constexpr CGFloat kSignalFontSize = 9.0;
-   constexpr CGFloat kSignalBorderWidth = 0.5;
-   constexpr CGFloat kSignalRadius = 4.0;
-   constexpr CGFloat kTitleSpacing = 10.0;
-   constexpr CGFloat kTitleFontSize = 13.0;
-   constexpr CGFloat kToolTipFontSize = 11.0;
-   constexpr CGFloat kToolTipIconWidth = 23.0;
-   constexpr CGFloat kToolTipIconHeight = 16.0;
-   constexpr CGFloat kToolTipPaddingX = 20.0;
-   constexpr CGFloat kToolTipPaddingY = 12.0;
-   constexpr CGFloat kButtonRadius = 6.0;
-   constexpr CGFloat kButtonHeight = 32.0;
-   constexpr CGFloat kButtonWidth = 120.0;
-   constexpr CGFloat kSpacing = 10.0;
-   constexpr CGFloat kContentSpacing = 16.0;
+   constexpr CGFloat kPadding{ 24.0 };
+   constexpr CGFloat kTitleHeightOffset{ 18.0 };
+   constexpr CGFloat kSignalIconSize{ 11.0 };
+   constexpr CGFloat kSignalFontSize{ 9.0 };
+   constexpr CGFloat kSignalBorderWidth{ 0.5 };
+   constexpr CGFloat kSignalRadius{ 4.0 };
+   constexpr CGFloat kTitleSpacing{ 10.0 };
+   constexpr CGFloat kTitleFontSize{ 13.0 };
+   constexpr CGFloat kToolTipFontSize{ 11.0 };
+   constexpr CGFloat kToolTipIconWidth{ 23.0 };
+   constexpr CGFloat kToolTipIconHeight{ 16.0 };
+   constexpr CGFloat kToolTipPaddingX{ 20.0 };
+   constexpr CGFloat kToolTipPaddingY{ 12.0 };
+   constexpr CGFloat kButtonRadius{ 6.0 };
+   constexpr CGFloat kButtonHeight{ 32.0 };
+   constexpr CGFloat kButtonWidth{ 120.0 };
+   constexpr CGFloat kSpacing{ 10.0 };
+   constexpr CGFloat kContentSpacing{ 16.0 };
 }
 
 #pragma mark - Objective-C Runtime Helpers
@@ -70,22 +70,22 @@ namespace ash::ui
       return [super performKeyEquivalent:event];
    }
    //
-   NSNumber* tag_number = objc_getAssociatedObject( self, "master_tag" );
+   NSNumber* tag_number{ objc_getAssociatedObject( self, "master_tag" ) };
    if ( !tag_number )
    {
       return [super performKeyEquivalent:event];
    }
    //
-   NSInteger target_tag = tag_number.integerValue;
-   NSMutableArray* stack = [NSMutableArray arrayWithObject:self.contentView];
+   NSInteger target_tag{ tag_number.integerValue };
+   NSMutableArray* stack{ [NSMutableArray arrayWithObject:self.contentView] };
    while ( stack.count )
    {
-      NSView* v = stack.lastObject;
+      NSView* v{ stack.lastObject };
       [stack removeLastObject];
       //
       if ( [v isKindOfClass:[NSButton class]] )
       {
-         NSButton* b = static_cast<NSButton*>( v );
+         NSButton* b{ static_cast<NSButton*>( v ) };
          if ( b.tag == target_tag )
          {
             [b performClick:nil];
@@ -114,23 +114,23 @@ namespace ash::ui
                                glyphPosition:( CGPoint )position
                               characterIndex:( NSUInteger )charIndex
 {
-   NSLayoutManager* lm = textContainer.layoutManager;
-   NSTextStorage* storage = lm.textStorage;
+   NSLayoutManager* lm{ textContainer.layoutManager };
+   NSTextStorage* storage{ lm.textStorage };
    //
    if ( !storage || charIndex >= storage.length )
    {
       return self.bounds;
    }
    //
-   NSFont* font = [storage attribute:NSFontAttributeName atIndex:charIndex effectiveRange:NULL];
+   NSFont* font{ [storage attribute:NSFontAttributeName atIndex:charIndex effectiveRange:NULL] };
    //
    if ( !font )
    {
       return self.bounds;
    }
    //
-   CGFloat const height = ceil( font.ascender - font.descender );
-   CGFloat const yOffset = font.descender;
+   CGFloat const height{ ceil( font.ascender - font.descender ) };
+   CGFloat const yOffset{ font.descender };
    //
    return NSMakeRect( 0.0, yOffset, height, height );
 }
@@ -144,7 +144,7 @@ namespace ash::ui
 
 - ( NSRect )drawingRectForBounds:( NSRect )rect
 {
-   NSRect r = [super drawingRectForBounds:rect];
+   NSRect r{ [super drawingRectForBounds:rect] };
    r.origin.y = 0.0;
    r.size.height = rect.size.height;
    return r;
@@ -187,25 +187,25 @@ namespace ash::ui
       [self removeTrackingArea:a];
    }
    //
-   NSTrackingArea* area = [[NSTrackingArea alloc] initWithRect:self.bounds
-                                                       options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
-                                                         owner:self
-                                                      userInfo:nil];
+   NSTrackingArea* area{ [[NSTrackingArea alloc] initWithRect:self.bounds
+                                                      options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+                                                        owner:self
+                                                     userInfo:nil] };
    [self addTrackingArea:area];
 }
 
 - ( void )showTooltip
 {
-   MG_TooltipPopover* popover = [[MG_TooltipPopover alloc] init];
+   MG_TooltipPopover* popover{ [[MG_TooltipPopover alloc] init] };
    popover.owner = self;
    //
-   NSViewController* vc = [[NSViewController alloc] init];
+   NSViewController* vc{ [[NSViewController alloc] init] };
    self.tooltip_label = [NSTextField labelWithString:@"Copy log to clipboard [⌘C]"];
    self.tooltip_label.font = [NSFont systemFontOfSize:ash::ui::kToolTipFontSize];
    self.tooltip_label.alignment = NSTextAlignmentCenter;
    self.tooltip_label.translatesAutoresizingMaskIntoConstraints = NO;
    //
-   NSView* view = [[NSView alloc] initWithFrame:NSZeroRect];
+   NSView* view{ [[NSView alloc] initWithFrame:NSZeroRect] };
    [view addSubview:self.tooltip_label];
    [NSLayoutConstraint activateConstraints:@[
       [self.tooltip_label.topAnchor constraintEqualToAnchor:view.topAnchor constant:ash::ui::kToolTipPaddingY],
@@ -250,23 +250,23 @@ namespace ash::ui
       return;
    }
    //
-   NSImage* checkmark = [NSImage imageWithSystemSymbolName:@"checkmark.circle.fill" accessibilityDescription:nil];
-   NSImageSymbolConfiguration* cfg = [NSImageSymbolConfiguration configurationWithPointSize:ash::ui::kToolTipFontSize
-                                                                                     weight:NSFontWeightMedium
-                                                                                      scale:NSImageSymbolScaleSmall];
+   NSImage* checkmark{ [NSImage imageWithSystemSymbolName:@"checkmark.circle.fill" accessibilityDescription:nil] };
+   NSImageSymbolConfiguration* cfg{ [NSImageSymbolConfiguration configurationWithPointSize:ash::ui::kToolTipFontSize
+                                                                                    weight:NSFontWeightMedium
+                                                                                     scale:NSImageSymbolScaleSmall] };
    checkmark = [checkmark imageWithSymbolConfiguration:cfg];
    //
-   NSTextAttachment* attach = [[NSTextAttachment alloc] init];
+   NSTextAttachment* attach{ [[NSTextAttachment alloc] init] };
    attach.image = checkmark;
    //
-   NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
+   NSMutableParagraphStyle* style{ [[NSMutableParagraphStyle alloc] init] };
    style.alignment = NSTextAlignmentCenter;
    style.lineBreakMode = NSLineBreakByClipping;
    //
-   NSAttributedString* icon = [NSAttributedString attributedStringWithAttachment:attach];
-   NSMutableAttributedString* str =
+   NSAttributedString* icon{ [NSAttributedString attributedStringWithAttachment:attach] };
+   NSMutableAttributedString* str{
      [[NSMutableAttributedString alloc] initWithString:@"Copied "
-                                            attributes:@{ NSParagraphStyleAttributeName : style, NSFontAttributeName : self.tooltip_label.font }];
+                                            attributes:@{ NSParagraphStyleAttributeName : style, NSFontAttributeName : self.tooltip_label.font }] };
    [str appendAttributedString:icon];
    //
    self.tooltip_label.attributedStringValue = str;
@@ -278,7 +278,7 @@ namespace ash::ui
    {
       return;
    }
-   NSPasteboard* pb = [NSPasteboard generalPasteboard];
+   NSPasteboard* pb{ [NSPasteboard generalPasteboard] };
    [pb clearContents];
    [pb setString:self.clipboard_text forType:NSPasteboardTypeString];
 }
@@ -349,12 +349,12 @@ namespace ash::ui
          return nil;
       }
       //
-      NSImage* const img = [image copy];
+      NSImage* const img{ [image copy] };
       //
       [img lockFocus];
       [color set];
       //
-      NSRect const rect = NSMakeRect( 0.0, 0.0, img.size.width, img.size.height );
+      NSRect const rect{ NSMakeRect( 0.0, 0.0, img.size.width, img.size.height ) };
       NSRectFillUsingOperation( rect, NSCompositingOperationSourceAtop );
       //
       [img unlockFocus];
@@ -364,7 +364,7 @@ namespace ash::ui
 
    [[nodiscard]] auto make_label( Description const& remark ) noexcept -> NSTextField*
    {
-      NSTextField* label = [[NSTextField alloc] initWithFrame:NSZeroRect];
+      NSTextField* label{ [[NSTextField alloc] initWithFrame:NSZeroRect] };
       //
       label.editable = NO;
       label.bordered = NO;
@@ -372,7 +372,7 @@ namespace ash::ui
       label.drawsBackground = NO;
       label.lineBreakMode = NSLineBreakByWordWrapping;
       //
-      NSMutableParagraphStyle* p = [[NSMutableParagraphStyle alloc] init];
+      NSMutableParagraphStyle* p{ [[NSMutableParagraphStyle alloc] init] };
       p.alignment = to_alignment( remark.alignment );
       //
       label.attributedStringValue =
@@ -387,7 +387,7 @@ namespace ash::ui
 
    [[nodiscard]] auto make_button( char const* text, NSInteger tag ) noexcept -> NSButton*
    {
-      NSButton* b = [[NSButton alloc] initWithFrame:NSZeroRect];
+      NSButton* b{ [[NSButton alloc] initWithFrame:NSZeroRect] };
       b.title = [NSString stringWithUTF8String:text];
       b.bezelStyle = NSBezelStyleGlass;
       b.contentTintColor = [NSColor controlAccentColor];
@@ -400,7 +400,7 @@ namespace ash::ui
 
    [[nodiscard]] auto make_sig_badge( Signal sig ) noexcept -> NSTextField*
    {
-      NSTextField* label = [[NSTextField alloc] initWithFrame:NSZeroRect];
+      NSTextField* label{ [[NSTextField alloc] initWithFrame:NSZeroRect] };
       [label setCell:[[MG_LabelCell alloc] init]];
       label.editable = NO;
       label.bordered = NO;
@@ -415,36 +415,36 @@ namespace ash::ui
       label.translatesAutoresizingMaskIntoConstraints = NO;
       //
       // ICON
-      NSImage* icon = [NSImage imageWithSystemSymbolName:ui::to_symbol( sig ) accessibilityDescription:nil];
-      NSImageSymbolConfiguration* cfg = [NSImageSymbolConfiguration configurationWithPointSize:kSignalIconSize
-                                                                                        weight:NSFontWeightRegular
-                                                                                         scale:NSImageSymbolScaleSmall];
+      NSImage* icon{ [NSImage imageWithSystemSymbolName:ui::to_symbol( sig ) accessibilityDescription:nil] };
+      NSImageSymbolConfiguration* cfg{ [NSImageSymbolConfiguration configurationWithPointSize:kSignalIconSize
+                                                                                       weight:NSFontWeightRegular
+                                                                                        scale:NSImageSymbolScaleSmall] };
       //
       icon = [icon imageWithSymbolConfiguration:cfg];
       icon = tint_image( icon, ui::to_color( sig ) );
       //
-      NSFont* const badge_font = [NSFont systemFontOfSize:kSignalFontSize weight:NSFontWeightSemibold];
-      CGFloat const glyph_h = std::ceil( badge_font.ascender - badge_font.descender );
-      CGFloat const baseline = badge_font.descender;
+      NSFont* const badge_font{ [NSFont systemFontOfSize:kSignalFontSize weight:NSFontWeightSemibold] };
+      CGFloat const glyph_h{ std::ceil( badge_font.ascender - badge_font.descender ) };
+      CGFloat const baseline{ badge_font.descender };
       //
-      MG_SignalAttachment* attach = [[MG_SignalAttachment alloc] init];
+      MG_SignalAttachment* attach{ [[MG_SignalAttachment alloc] init] };
       attach.image = icon;
       attach.bounds = NSMakeRect( 0.0, baseline, glyph_h, glyph_h );
       //
-      NSAttributedString* icon_str = [NSAttributedString attributedStringWithAttachment:attach];
+      NSAttributedString* icon_str{ [NSAttributedString attributedStringWithAttachment:attach] };
       //
       // TEXT
-      NSString* text = [NSString stringWithUTF8String:reflection::to_string( sig, ash::FormatFlags{ .uppercase = true } ).data( )];
-      NSDictionary* attrs = @{ NSFontAttributeName : badge_font, NSForegroundColorAttributeName : ui::to_color( sig ) };
+      NSString* text{ [NSString stringWithUTF8String:reflection::to_string( sig, ash::FormatFlags{ .uppercase = true } ).data( )] };
+      NSDictionary* attrs{ @{ NSFontAttributeName : badge_font, NSForegroundColorAttributeName : ui::to_color( sig ) } };
       //
-      NSAttributedString* text_str = [[NSAttributedString alloc] initWithString:text attributes:attrs];
-      NSMutableAttributedString* combined = [[NSMutableAttributedString alloc] initWithString:@" "];
+      NSAttributedString* text_str{ [[NSAttributedString alloc] initWithString:text attributes:attrs] };
+      NSMutableAttributedString* combined{ [[NSMutableAttributedString alloc] initWithString:@" "] };
       [combined appendAttributedString:icon_str];
       [combined appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
       [combined appendAttributedString:text_str];
       [combined appendAttributedString:[[NSAttributedString alloc] initWithString:@" "]];
       //
-      CGFloat const badge_h = std::ceil( badge_font.ascender - badge_font.descender ) + kSignalFontSize;
+      CGFloat const badge_h{ std::ceil( badge_font.ascender - badge_font.descender ) + kSignalFontSize };
       [label.heightAnchor constraintEqualToConstant:badge_h].active = YES;
       //
       label.attributedStringValue = combined;
@@ -459,16 +459,16 @@ namespace ash::ui
 {
    [[nodiscard]] auto make_text_stack( std::span<Description const> fields, CGFloat width ) noexcept -> std::pair<NSStackView*, CGFloat>
    {
-      NSStackView* stack = [NSStackView stackViewWithViews:@[]];
+      NSStackView* stack{ [NSStackView stackViewWithViews:@[]] };
       stack.orientation = NSUserInterfaceLayoutOrientationVertical;
       stack.alignment = NSLayoutAttributeLeading;
       stack.spacing = kSpacing;
       //
-      CGFloat height = 0.0;
+      CGFloat height{ 0.0 };
       //
       for ( auto const& f : fields )
       {
-         NSTextField* label = make_label( f );
+         NSTextField* label{ make_label( f ) };
          label.translatesAutoresizingMaskIntoConstraints = NO;
          label.preferredMaxLayoutWidth = width;
          //
@@ -489,14 +489,14 @@ namespace ash::ui
 
    [[nodiscard]] auto make_button_row( std::span<Choice const> choices ) noexcept -> NSStackView*
    {
-      NSStackView* row = [NSStackView stackViewWithViews:@[]];
+      NSStackView* row{ [NSStackView stackViewWithViews:@[]] };
       row.orientation = NSUserInterfaceLayoutOrientationHorizontal;
       row.alignment = NSLayoutAttributeCenterY;
       row.spacing = kSpacing;
       //
-      for ( NSInteger i = 0; i < static_cast<NSInteger>( choices.size( ) ); ++i )
+      for ( NSInteger i{ 0 }; i < static_cast<NSInteger>( choices.size( ) ); ++i )
       {
-         NSButton* b = make_button( choices[static_cast<std::size_t>( i )].label.data( ), i );
+         NSButton* b{ make_button( choices[static_cast<std::size_t>( i )].label.data( ), i ) };
          b.translatesAutoresizingMaskIntoConstraints = NO;
          [b.widthAnchor constraintEqualToConstant:kButtonWidth].active = YES;
          [row addArrangedSubview:b];
@@ -513,11 +513,11 @@ namespace ash::ui
    [[nodiscard]] auto make_panel( char const* title, CGFloat width, CGFloat height, Signal sig, NSMutableString* combined_text_content ) noexcept
      -> MG_Panel*
    {
-      MG_Panel* const panel = [[MG_Panel alloc] initWithContentRect:NSMakeRect( 0.0, 0.0, width, height )
-                                                          styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
-                                                                    NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskFullSizeContentView
-                                                            backing:NSBackingStoreBuffered
-                                                              defer:NO];
+      MG_Panel* const panel{ [[MG_Panel alloc] initWithContentRect:NSMakeRect( 0.0, 0.0, width, height )
+                                                         styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
+                                                                   NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskFullSizeContentView
+                                                           backing:NSBackingStoreBuffered
+                                                             defer:NO] };
       [[panel standardWindowButton:NSWindowZoomButton] setHidden:YES];
       //
       panel.titleVisibility = NSWindowTitleHidden;
@@ -528,19 +528,19 @@ namespace ash::ui
       panel.hasShadow = YES;
       panel.becomesKeyOnlyIfNeeded = NO;
       //
-      NSView* titlebar_view = [[panel standardWindowButton:NSWindowCloseButton] superview];
-      NSStackView* title_stack = [NSStackView stackViewWithViews:@[]];
+      NSView* titlebar_view{ [[panel standardWindowButton:NSWindowCloseButton] superview] };
+      NSStackView* title_stack{ [NSStackView stackViewWithViews:@[]] };
       title_stack.orientation = NSUserInterfaceLayoutOrientationHorizontal;
       title_stack.alignment = NSLayoutAttributeCenterY;
       title_stack.spacing = kTitleSpacing;
       title_stack.translatesAutoresizingMaskIntoConstraints = NO;
       //
       {
-         NSTextField* sig_label = make_sig_badge( sig );
+         NSTextField* sig_label{ make_sig_badge( sig ) };
          [title_stack addArrangedSubview:sig_label];
          //
          // TITLE
-         NSTextField* titleText = [[NSTextField alloc] initWithFrame:NSZeroRect];
+         NSTextField* titleText{ [[NSTextField alloc] initWithFrame:NSZeroRect] };
          titleText.stringValue = [NSString stringWithUTF8String:title];
          titleText.editable = NO;
          titleText.bordered = NO;
@@ -555,7 +555,7 @@ namespace ash::ui
          //
          [titlebar_view addSubview:title_stack];
          //
-         NSButton* miniaturize_button = [panel standardWindowButton:NSWindowMiniaturizeButton];
+         NSButton* miniaturize_button{ [panel standardWindowButton:NSWindowMiniaturizeButton] };
          [NSLayoutConstraint activateConstraints:@[
             [title_stack.leadingAnchor constraintEqualToAnchor:miniaturize_button.trailingAnchor constant:kContentSpacing],
             [title_stack.centerYAnchor constraintEqualToAnchor:miniaturize_button.centerYAnchor]
@@ -564,15 +564,15 @@ namespace ash::ui
       //
       {
          // COPY BUTTON
-         NSImage* copy_icon = [NSImage imageWithSystemSymbolName:@"doc.on.doc" accessibilityDescription:@"Copy"];
-         NSImageSymbolConfiguration* cfg = [NSImageSymbolConfiguration configurationWithPointSize:kSignalIconSize
-                                                                                           weight:NSFontWeightRegular
-                                                                                            scale:NSImageSymbolScaleSmall];
+         NSImage* copy_icon{ [NSImage imageWithSystemSymbolName:@"doc.on.doc" accessibilityDescription:@"Copy"] };
+         NSImageSymbolConfiguration* cfg{ [NSImageSymbolConfiguration configurationWithPointSize:kSignalIconSize
+                                                                                          weight:NSFontWeightRegular
+                                                                                           scale:NSImageSymbolScaleSmall] };
          //
          copy_icon = [copy_icon imageWithSymbolConfiguration:cfg];
          [copy_icon setTemplate:YES];
          //
-         MG_HoverButton* copy_button = [[MG_HoverButton alloc] initWithFrame:NSZeroRect];
+         MG_HoverButton* copy_button{ [[MG_HoverButton alloc] initWithFrame:NSZeroRect] };
          copy_button.image = copy_icon;
          copy_button.tint = ui::to_color( sig );
          copy_button.bordered = NO;
@@ -605,7 +605,7 @@ namespace ash::ui
          ]];
       }
       //
-      NSVisualEffectView* const vfx = [[NSVisualEffectView alloc] initWithFrame:NSMakeRect( 0.0, 0.0, width, height )];
+      NSVisualEffectView* const vfx{ [[NSVisualEffectView alloc] initWithFrame:NSMakeRect( 0.0, 0.0, width, height )] };
       vfx.material = NSVisualEffectMaterialHUDWindow;
       vfx.blendingMode = NSVisualEffectBlendingModeBehindWindow;
       vfx.state = NSVisualEffectStateActive;
@@ -633,29 +633,29 @@ namespace ash::detail
       auto const max_w = static_cast<CGFloat>( request.max_width );
       auto const min_w = static_cast<CGFloat>( request.min_width );
       //
-      std::size_t const choices_count = request.choices.size( );
-      CGFloat const buttons_w =
-        static_cast<CGFloat>( choices_count ) * kButtonWidth + static_cast<CGFloat>( choices_count - 1U ) * kSpacing + kPadding * 2.0;
+      std::size_t const choices_count{ request.choices.size( ) };
+      CGFloat const buttons_w{
+        static_cast<CGFloat>( choices_count ) * kButtonWidth + static_cast<CGFloat>( choices_count - 1U ) * kSpacing + kPadding * 2.0 };
       //
-      CGFloat const panel_w = std::min( std::max( min_w, buttons_w ), max_w );
-      CGFloat const inner_w = panel_w - kPadding * 2.0;
+      CGFloat const panel_w{ std::min( std::max( min_w, buttons_w ), max_w ) };
+      CGFloat const inner_w{ panel_w - kPadding * 2.0 };
       //
       auto const [text_stack, text_h] = make_text_stack( request.descriptions, inner_w );
       //
-      NSStackView* buttons = make_button_row( request.choices );
-      NSArray* btn_view = buttons.views;
+      NSStackView* buttons{ make_button_row( request.choices ) };
+      NSArray* btn_view{ buttons.views };
       //
-      NSButton* master = btn_view[request.master_choice];
+      NSButton* master{ btn_view[request.master_choice] };
       master.layer.backgroundColor = to_ns_color( request.signal_color ).CGColor;
       master.layer.cornerRadius = kButtonRadius;
       //
-      NSStackView* content = [NSStackView stackViewWithViews:@[ text_stack, buttons ]];
+      NSStackView* content{ [NSStackView stackViewWithViews:@[ text_stack, buttons ]] };
       content.orientation = NSUserInterfaceLayoutOrientationVertical;
       content.alignment = NSLayoutAttributeCenterX;
       content.spacing = kContentSpacing;
       content.edgeInsets = NSEdgeInsetsMake( kPadding, kPadding, kPadding, kPadding );
       //
-      NSMutableString* combined_text_content = [NSMutableString string];
+      NSMutableString* combined_text_content{ [NSMutableString string] };
       for ( auto const& f : request.descriptions )
       {
          if ( !f.content.empty( ) )
@@ -665,8 +665,8 @@ namespace ash::detail
          }
       }
       //
-      CGFloat const panel_h = kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0;
-      MG_Panel* panel = make_panel( request.title.data( ), panel_w, panel_h, request.signal, combined_text_content );
+      CGFloat const panel_h{ kTitleHeightOffset + text_h + kButtonHeight + kContentSpacing + kPadding * 2.0 };
+      MG_Panel* panel{ make_panel( request.title.data( ), panel_w, panel_h, request.signal, combined_text_content ) };
       panel.initialFirstResponder = panel.contentView;
       [panel center];
       [panel.contentView addSubview:content];
@@ -681,11 +681,11 @@ namespace ash::detail
       ]];
        //
        {
-          NSMutableArray* handlers = [NSMutableArray array];
+          NSMutableArray* handlers{ [NSMutableArray array] };
           //
           for ( NSButton* b in btn_view )
           {
-             MG_ButtonHandler* h = [[MG_ButtonHandler alloc] init];
+             MG_ButtonHandler* h{ [[MG_ButtonHandler alloc] init] };
              h.tag = b.tag;
              b.target = h;
              b.action = @selector( handleClick: );
@@ -696,7 +696,7 @@ namespace ash::detail
           {
              [btn_view[request.cancel_choice] setKeyEquivalent:@"\033"];
              auto const close_tag = static_cast<NSInteger>( request.cancel_choice );
-             MG_ButtonHandler* delegate = handlers[0];
+             MG_ButtonHandler* delegate{ handlers[0] };
              delegate.cancel_tag = close_tag;
              panel.delegate = delegate;
           }

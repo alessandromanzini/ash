@@ -13,10 +13,10 @@ namespace ash::theme
 {
    struct Color
    {
-      std::uint8_t r = 0U;
-      std::uint8_t g = 0U;
-      std::uint8_t b = 0U;
-      std::uint8_t a = UINT8_MAX;
+      std::uint8_t r{ 0U };
+      std::uint8_t g{ 0U };
+      std::uint8_t b{ 0U };
+      std::uint8_t a{ UINT8_MAX };
    };
 
    [[nodiscard]] constexpr auto signal_to_color( Signal sig ) noexcept -> Color

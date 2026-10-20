@@ -23,14 +23,14 @@ namespace ash
     */
    struct Description // TODO: Allow override for alignment
    {
-      static constexpr float header_font_size = 16.0f;
-      static constexpr float body_font_size = 14.0f;
-      static constexpr float caption_font_size = 10.0f;
+      static constexpr float header_font_size{ 16.0f };
+      static constexpr float body_font_size{ 14.0f };
+      static constexpr float caption_font_size{ 10.0f };
 
       std::string_view content;
-      float font_size = body_font_size;
-      style::Font font_style = style::Font::normal;
-      style::TextAlignment alignment = style::TextAlignment::left;
+      float font_size{ body_font_size };
+      style::Font font_style{ style::Font::normal };
+      style::TextAlignment alignment{ style::TextAlignment::left };
 
       [[nodiscard]] static auto as_header( std::string_view const content ) noexcept -> Description
       {
@@ -59,8 +59,8 @@ namespace ash
    struct Choice
    {
       std::string_view label;
-      std::uint8_t token = UINT8_MAX;
-      enum class Tag : std::uint8_t { none, master, cancel } tag = Tag::none;
+      std::uint8_t token{ UINT8_MAX };
+      enum class Tag : std::uint8_t { none, master, cancel } tag{ Tag::none };
 
       [[nodiscard]] static auto as_master( std::string_view const label, std::uint8_t const token = UINT8_MAX ) noexcept -> Choice
       {

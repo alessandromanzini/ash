@@ -56,10 +56,10 @@ namespace ash::detail
 
    [[nodiscard]] consteval auto parse_time( std::string_view spec ) -> Field
    {
-      std::string_view const time_spec = spec.empty( ) ? "%H:%M:%S" : spec;
+      std::string_view const time_spec{ spec.empty( ) ? "%H:%M:%S" : spec };
       //
       // hms-shaped specs dispatch to the quick table renderer, everything else is forwarded to the chrono formatter.
-      if ( std::optional<time::HmsPrecision> const precision = time::parse_hms_spec( time_spec ); precision.has_value( ) )
+      if ( std::optional<time::HmsPrecision> const precision{ time::parse_hms_spec( time_spec ) }; precision.has_value( ) )
       {
          return { .kind = Field::Kind::time_quick, .precision = precision.value( ) };
       }
@@ -75,9 +75,9 @@ namespace ash::detail
     */
    [[nodiscard]] consteval auto parse_field( std::string_view token ) -> Field
    {
-      std::size_t const colon = token.find( ':' );
-      std::string_view const name = token.substr( 0, colon );
-      std::string_view const spec = colon == std::string_view::npos ? std::string_view{} : token.substr( colon + 1 );
+      std::size_t const colon{ token.find( ':' ) };
+      std::string_view const name{ token.substr( 0, colon ) };
+      std::string_view const spec{ colon == std::string_view::npos ? std::string_view{} : token.substr( colon + 1 ) };
       //
       // 1. Keywords that accept a spec.
       if ( name == "SIG" )
@@ -220,7 +220,7 @@ export namespace ash
          //
          while ( cursor < fmt.size( ) )
          {
-            char const c = fmt[cursor];
+            char const c{ fmt[cursor] };
             //
             // 1. Plain character: keep growing the current literal run.
             if ( c != '{' && c != '}' )
@@ -244,7 +244,7 @@ export namespace ash
                {
                   detail::invalid_format( "Unmatched }." );
                }
-               std::size_t const close = fmt.find( '}', cursor + 1 );
+               std::size_t const close{ fmt.find( '}', cursor + 1 ) };
                if ( close == std::string_view::npos )
                {
                   detail::invalid_format( "Missing } after keyword." );

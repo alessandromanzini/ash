@@ -80,7 +80,7 @@ export namespace ash
 
       auto open( ) noexcept -> Choice
       {
-         std::size_t const selected = detail::open_modal(
+         std::size_t const selected{ detail::open_modal(
            {
               .title = title_,
               .signal = signal_,
@@ -93,24 +93,24 @@ export namespace ash
               .cancel_choice = cancel_choice_.value_or( 0 ),
               .max_width = max_modal_width_,
               .min_width = min_width_.value_or( 0.0f )
-         } );
+         } ) };
          return selected < choices_count_ ? choices_[selected] : Choice{};
       }
 
    private:
-      static constexpr float max_modal_width_ = 900.0f;
+      static constexpr float max_modal_width_{ 900.0f };
 
       std::string_view const title_;
 
       std::optional<float> min_width_;
-      Signal signal_ = Signal::info;
+      Signal signal_{ Signal::info };
 
-      static constexpr std::size_t max_accessories_count_ = 6U;
+      static constexpr std::size_t max_accessories_count_{ 6U };
       std::array<Description, max_accessories_count_> descriptions_{}; // use inplace_vector
       std::array<Choice, max_accessories_count_> choices_{};
 
-      std::uint8_t descriptions_count_ = 0U;
-      std::uint8_t choices_count_ = 0U;
+      std::uint8_t descriptions_count_{ 0U };
+      std::uint8_t choices_count_{ 0U };
       std::optional<std::uint8_t> master_choice_;
       std::optional<std::uint8_t> cancel_choice_;
    };

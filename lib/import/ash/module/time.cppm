@@ -27,7 +27,7 @@ namespace ash::detail
     * @tparam Precision
     */
    template <traits::time_precision Precision>
-   constexpr std::size_t rendered_size_v = [] -> std::size_t {
+   constexpr std::size_t rendered_size_v{ [] -> std::size_t {
       std::size_t size{ 2 }; // HH
       if constexpr ( not is_hours_only_v<Precision> )
       {
@@ -36,13 +36,13 @@ namespace ash::detail
       if constexpr ( is_sub_minute_v<Precision> )
       {
          size += 3; // :SS
-         if constexpr ( constexpr std::size_t decimals = std::chrono::hh_mm_ss<Precision>::fractional_width; decimals > 0 )
+         if constexpr ( constexpr std::size_t decimals{ std::chrono::hh_mm_ss<Precision>::fractional_width }; decimals > 0 )
          {
             size += 1 + decimals; // .x
          }
       }
       return size;
-   }( );
+   }( ) };
 }
 
 export namespace ash::time
@@ -55,9 +55,9 @@ export namespace ash::time
    {
       using hms_type = std::chrono::hh_mm_ss<Precision>;
 
-      static constexpr std::size_t repr_length = detail::rendered_size_v<Precision>;
-      static constexpr std::size_t fractional_width = hms_type::fractional_width;
-      static constexpr bool has_decimals = detail::is_sub_minute_v<Precision> && fractional_width > 0;
+      static constexpr std::size_t repr_length{ detail::rendered_size_v<Precision> };
+      static constexpr std::size_t fractional_width{ hms_type::fractional_width };
+      static constexpr bool has_decimals{ detail::is_sub_minute_v<Precision> && fractional_width > 0 };
 
       std::array<char, repr_length> chars{};
 
@@ -80,7 +80,7 @@ namespace ash::detail
     */
    inline constexpr auto two_digit_table = [] {
       std::array<char, 200> table{};
-      for ( std::size_t i = 0; i < 100; ++i )
+      for ( std::size_t i{ 0 }; i < 100; ++i )
       {
          table[i * 2] = static_cast<char>( '0' + i / 10 );
          table[i * 2 + 1] = static_cast<char>( '0' + i % 10 );
@@ -111,8 +111,8 @@ namespace ash::detail
     */
    template <std::size_t width> CBR_FORCE_INLINE constexpr auto write_decimals( char* out, std::size_t value ) noexcept -> char*
    {
-      char* const tail = std::next( out, width );
-      for ( char* it = tail; it != out; value /= 10 )
+      char* const tail{ std::next( out, width ) };
+      for ( char* it{ tail }; it != out; value /= 10 )
       {
          *--it = static_cast<char>( '0' + value % 10 );
       }
@@ -135,12 +135,12 @@ export namespace ash::time
    template <traits::time_precision Precision = std::chrono::microseconds, typename Clock, typename Duration>
    constexpr auto render_hms( std::chrono::time_point<Clock, Duration> timestamp ) noexcept -> TimeString<Precision>
    {
-      std::chrono::time_point<Clock, Precision> const precision_timestamp = std::chrono::floor<Precision>( timestamp );
+      std::chrono::time_point<Clock, Precision> const precision_timestamp{ std::chrono::floor<Precision>( timestamp ) };
       typename TimeString<Precision>::hms_type const hms{ precision_timestamp - std::chrono::floor<std::chrono::days>( precision_timestamp ) };
       //
       TimeString<Precision> repr{};
       //
-      char* cursor = repr.begin( );
+      char* cursor{ repr.begin( ) };
       auto const append_char = [&cursor]( char c ) { *cursor++ = c; };
       //
       cursor = detail::write_two_digit( cursor, static_cast<std::size_t>( hms.hours( ).count( ) ) );

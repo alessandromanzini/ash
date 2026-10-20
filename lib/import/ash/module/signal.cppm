@@ -26,7 +26,7 @@ export template <> struct std::formatter<ash::Signal>
 {
    constexpr auto parse( std::format_parse_context const& ctx ) noexcept -> std::format_parse_context::const_iterator
    {
-      for ( char const* spec = ctx.begin( ); spec != ctx.end( ); ++spec )
+      for ( char const* spec{ ctx.begin( ) }; spec != ctx.end( ); ++spec )
       {
          switch ( *spec )
          {

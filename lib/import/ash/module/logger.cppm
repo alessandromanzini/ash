@@ -39,7 +39,7 @@ template <> struct std::hash<std::source_location>
    [[nodiscard]] inline auto operator( )( std::source_location const& loc ) const noexcept -> std::size_t
    {
       // Fibonacci (golden ratio) multiplicative hash over the packed line/column pair.
-      std::uint64_t const packed = static_cast<std::uint64_t>( loc.line( ) ) << 32 | loc.column( );
+      std::uint64_t const packed{ static_cast<std::uint64_t>( loc.line( ) ) << 32 | loc.column( ) };
       return static_cast<std::size_t>( packed * 0x9E37'79B9'7F4A'7C15ULL );
    }
 };
@@ -153,12 +153,12 @@ export namespace ash
       std::unordered_map<std::source_location, std::uint32_t, std::hash<std::source_location>, detail::SourceLocationCmpEq> echo_counts_{};
 
       Dispatcher<DispatchPolicy> dispatcher_;
-      schema::WriteMetadata::sequence_id_type sequence_id_ = 0;
+      schema::WriteMetadata::sequence_id_type sequence_id_{ 0 };
 
       struct Filter
       {
-         Signal signal = Signal::trace;
-         enum class Op : std::uint8_t { eq, lt, lt_eq, gt, gt_eq } order = Op::gt_eq;
+         Signal signal{ Signal::trace };
+         enum class Op : std::uint8_t { eq, lt, lt_eq, gt, gt_eq } order{ Op::gt_eq };
       };
       static_assert( std::atomic<Filter>::is_always_lock_free, "Filter must stay small enough for a lock-free atomic." );
 
@@ -200,7 +200,7 @@ export namespace ash
        */
       [[nodiscard]] CBR_NO_INLINE auto consume_echo( schema::WriteOptions const& options ) noexcept -> bool
       {
-         std::uint32_t& used = echo_counts_[options.where];
+         std::uint32_t& used{ echo_counts_[options.where] };
          if ( used >= options.echo.value( ) )
          {
             return false;
