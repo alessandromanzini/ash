@@ -120,29 +120,18 @@ namespace ash::detail
 
 export namespace ash::schema
 {
-   struct WriteOptions
-   {
-      /// Maximum number of times the originating call site may emit.
-      std::optional<std::uint32_t> echo;
-      std::source_location where;
-   };
-
    /**
-    * Per-entry information captured at the call site, consumed by the title renderer.
+    * Per-entry information captured at the call site, consumed by the title renderer. Per-logger information (e.g. its identity) lives in the
+    * \c WriteConfig instead, so entries stay small and own nothing.
     */
-   struct WriteMetadata // TODO: identifier
+   struct WriteMetadata
    {
       using sequence_id_type = std::uint32_t;
 
       sequence_id_type sequence_id;
       Signal signal;
-
-      /// @warning Deferred dispatch copies this view (not the bytes) into the ring, where it is read later by the worker thread. The referenced
-      ///          storage must therefore outlive the logger (e.g. a string literal or other static storage).
-      std::string_view identity;
-
-      std::chrono::system_clock::time_point timestamp;
-      WriteOptions options;
+      time::TickClock::repr timestamp;
+      std::source_location where;
    };
 }
 
@@ -164,7 +153,7 @@ export namespace ash
     *                    - "HH:MM:SS.uuuuuu"
     *                    - "%H:%M:%S" (default)
     *  - `{SIG}`      — Severity level of the entry. `{SIG:u}` for uppercase, `{SIG:s}` for shorthand; flags can be combined (`{SIG:us}`).
-    *  - `{ID}`       — Identifier of the entry.
+    *  - `{ID}`       — Name of the logger, see \c WriteConfig::identity.
     *  - `{PATH}`     — Source file path of the call site.
     *  - `{LINE}`     — Source line number of the call site.
     *  - `{COLUMN}`   — Source column number of the call site.
@@ -172,19 +161,27 @@ export namespace ash
     *
     * @note Keywords and specs are case-sensitive. Use "{{" and "}}" for literal braces.
     */
-   class Format final
+   class CompiledFormat final
    {
    public:
       static constexpr std::size_t max_fields{ 32 };
 
       // Implicit by design, so a string literal can be assigned wherever a title is expected.
       template <typename S> requires std::convertible_to<S const&, std::string_view>
-      consteval Format( S const& source )
+      consteval CompiledFormat( S const& source )
       {
          compile( source );
       }
 
-      template <std::size_t N> auto render( CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata ) const -> void
+      /**
+       * @param reservoir
+       * @param metadata
+       * @param identity
+       * @param timestamp The entry's wall-clock time, already converted from \c WriteMetadata::timestamp ticks.
+       */
+      template <std::size_t N>
+      auto render( CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata, std::string_view identity,
+                   std::chrono::system_clock::time_point timestamp ) const -> void
       {
          using Kind = detail::Field::Kind;
          //
@@ -194,15 +191,15 @@ export namespace ash
             {
                case Kind::literal     : reservoir.pour( text ); break;
                case Kind::signal      : reservoir.pour( reflection::to_string( metadata.signal, signal_flags ) ); break;
-               case Kind::identity    : reservoir.pour( metadata.identity ); break;
-               case Kind::path        : reservoir.pour( std::string_view{ metadata.options.where.file_name( ) } ); break;
-               case Kind::line        : reservoir.pour( metadata.options.where.line( ) ); break;
-               case Kind::column      : reservoir.pour( metadata.options.where.column( ) ); break;
-               case Kind::function    : reservoir.pour( std::string_view{ metadata.options.where.function_name( ) } ); break;
+               case Kind::identity    : reservoir.pour( identity ); break;
+               case Kind::path        : reservoir.pour( std::string_view{ metadata.where.file_name( ) } ); break;
+               case Kind::line        : reservoir.pour( metadata.where.line( ) ); break;
+               case Kind::column      : reservoir.pour( metadata.where.column( ) ); break;
+               case Kind::function    : reservoir.pour( std::string_view{ metadata.where.function_name( ) } ); break;
 
-               case Kind::time_quick  : time::visit_hms( precision, metadata.timestamp, [&]( std::string_view hms ) { reservoir.pour( hms ); } ); break;
+               case Kind::time_quick  : time::visit_hms( precision, timestamp, [&]( std::string_view hms ) { reservoir.pour( hms ); } ); break;
 
-               case Kind::time_generic: render_generic_time( reservoir, text, metadata.timestamp ); break;
+               case Kind::time_generic: render_generic_time( reservoir, text, timestamp ); break;
 
                default                : std::unreachable( );
             }
@@ -290,5 +287,26 @@ export namespace ash
          std::string_view const replacement_field{ fmt.data( ), spec.size( ) + 3 };
          std::vformat_to( reservoir.inserter( ), replacement_field, std::make_format_args( timestamp ) );
       }
+   };
+}
+
+export namespace ash
+{
+   /**
+    * @brief A format string that also records where it was written.
+    *
+    * The \c std::source_location is a default argument of the constructor, so it is evaluated where the string literal is converted: the caller's
+    * line. Format strings are still checked at compile time, exactly like \c std::format_string.
+    */
+   template <typename... Args> struct FormatAt
+   {
+      std::format_string<Args...> fmt;
+      std::source_location where;
+
+      template <typename S> requires std::convertible_to<S const&, std::string_view>
+      consteval FormatAt( S const& source, std::source_location const& location = std::source_location::current( ) )
+         : fmt{ source }
+         , where{ location }
+      { }
    };
 }

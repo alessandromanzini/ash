@@ -24,9 +24,9 @@ namespace ash::detail
     * A deferred log record: metadata plus the burnt format arguments, held in a fixed inline buffer.
     * @note Aligned to \c std::hardware_destructive_interference_size to avoid false sharing.
     * @note This costs nothing as long as \p N is chosen so the record lands on a multiple of the interference size... the header (metadata, renderer,
-    *       format view and flags) occupies 75 bytes and \p N = 181 by default, which yields exactly 256.
+    *       format view and flags) occupies 51 bytes and \p N = 205 by default, which yields exactly 256.
     */
-   template <std::size_t N = 181> struct alignas( std::hardware_destructive_interference_size ) Message
+   template <std::size_t N = 205> struct alignas( std::hardware_destructive_interference_size ) Message
    {
       static constexpr std::size_t capacity{ N };
 
@@ -109,11 +109,6 @@ export namespace ash
          }
       }
 
-      CBR_FORCE_INLINE auto dispatch( schema::WriteMetadata const& metadata, std::string_view body ) const noexcept -> void
-      {
-         stream_.write<P::inline_buffer_size>( metadata, body );
-      }
-
    private:
       LogStream stream_;
    };
@@ -121,7 +116,8 @@ export namespace ash
    /**
     * Deferred dispatch: chunks are queued in a ring buffer and drained on a dedicated worker thread.
     * The ring is a lock-free SPSC queue: the producer owns the "tail", the consumer owns the "head", and the payload is published/observed through
-    * release/acquire ordering. Blocking is done with an atomic doorbell ("wait"/"notify").
+    * release/acquire ordering. The producer never wakes the worker: the worker polls, yielding briefly after activity and otherwise sleeping
+    * \c P::poll_interval between checks, so logging never costs the caller a system call.
     *
     * Format arguments are not rendered on the caller thread: they are burnt into the slot through their \c traits::Codec, and the worker formats
     * them. String arguments are copied, so nothing in the record refers back to the caller's storage.
@@ -136,9 +132,13 @@ export namespace ash
 
       static constexpr std::size_t message_size{ P::inline_buffer_size == 0 ? detail::Message<>::capacity : P::inline_buffer_size };
       using message_type = detail::Message<message_size>;
+      using ring_type = std::array<message_type, P::pool_size>;
 
-      // Empty polls the worker spends yielding before it goes to sleep, so a burst does not pay a sleep/wake round trip per message.
+      // Empty polls the worker spends yielding before it sleeps, so a burst is drained continuously instead of once per poll interval.
       static constexpr std::size_t idle_spin_limit{ 64 };
+
+      // Producer-owned and consumer-owned state live on separate cache lines, so neither side's writes evict the other's.
+      static constexpr std::size_t cache_line{ std::hardware_destructive_interference_size };
 
    public:
       explicit Dispatcher( schema::WriteConfig config ) noexcept
@@ -147,11 +147,11 @@ export namespace ash
 
       ~Dispatcher( ) noexcept
       {
-         // Request stop so the worker can break out of the loop, ring the doorbell to wake it, then join so the ring is torn down only after it has
-         // fully drained.
-         // TODO: use std::stop_token when non-experimental in clang libc++. (last checked on 22.1.8)
+         // Request stop, then join so the ring is torn down only after the worker has fully drained it. A sleeping worker notices within one poll
+         // interval.
+         // TODO: use std::jthread + std::stop_token once module consumers link against it: at -O0, clang does not emit libc++'s
+         //       std::__atomic_unique_lock::__set_locked_bit for importers, leaving it undefined. (last checked on clang 22.1.8)
          request_stop( );
-         ring_doorbell( );
          worker_.join( );
       }
 
@@ -170,23 +170,23 @@ export namespace ash
          stage<std::remove_cvref_t<Args>...>( metadata, fmt.get( ), args... );
       }
 
-      /**
-       * Pre-rendered overload: the body is burnt as a single string argument, so it goes through the same path as any other message.
-       */
-      auto dispatch( schema::WriteMetadata const& metadata, std::string_view body ) noexcept -> void
-      {
-         stage<std::string_view>( metadata, "{}", body );
-      }
-
    private:
+      // Read-only once the worker runs.
       schema::WriteConfig const config_;
 
-      std::array<message_type, P::pool_size> ring_{};
-      std::atomic<std::size_t> head_{ 0 }; // monotonic write by PRODUCER, read by CONSUMER
-      std::atomic<std::size_t> tail_{ 0 }; // monotonic write by CONSUMER, read by PRODUCER
-      std::atomic<std::uint32_t> doorbell_{ 0 };
-      std::atomic<bool> sleeping_{ false }; // raised by CONSUMER right before blocking on the doorbell
-      std::atomic_flag stop_token_{};
+      // On the heap, so the dispatcher stays small enough to live on any thread's stack.
+      // We leave it uninitialized because every slot is fully written before it is published, and the worker never reads body bytes past body_len.
+      std::unique_ptr<ring_type> const ring_{ std::make_unique_for_overwrite<ring_type>( ) };
+
+      // PRODUCER line: its write position, and its last known copy of the consumer's position.
+      alignas( cache_line ) std::atomic<std::size_t> tail_{ 0 };
+      std::size_t head_cache_{ 0 };
+
+      // CONSUMER line: its read position.
+      alignas( cache_line ) std::atomic<std::size_t> head_{ 0 };
+
+      // Written once by the destructor, read on every poll.
+      alignas( cache_line ) std::atomic_flag stop_token_{};
 
       std::thread worker_{ [this] { run( ); } };
 
@@ -200,10 +200,15 @@ export namespace ash
          //
          std::size_t const tail{ tail_.load( std::memory_order_relaxed ) };
          //
-         // 1. Drop the newest entry if the ring is full (wine retention).
-         if ( bool const pool_congested{ std::cmp_equal( tail - head_.load( std::memory_order_acquire ), P::pool_size ) }; pool_congested )
+         // 1. Only read the consumer's line when the cached head says the ring may be full, then drop the newest entry if it really is (wine
+         //    retention).
+         if ( std::cmp_equal( tail - head_cache_, P::pool_size ) )
          {
-            return;
+            head_cache_ = head_.load( std::memory_order_acquire );
+            if ( std::cmp_equal( tail - head_cache_, P::pool_size ) )
+            {
+               return;
+            }
          }
          //
          // 2. Fill the slot, then publish it with a release store on tail_.
@@ -218,14 +223,6 @@ export namespace ash
          slot.metadata = metadata;
          //
          tail_.store( tail + 1, std::memory_order_release );
-         //
-         // 3. Ring the doorbell only if the worker is (about to be) asleep. The fence pairs with the one in run(): either the worker sees the new
-         //    tail before blocking, or we see its sleeping flag here.
-         std::atomic_thread_fence( std::memory_order_seq_cst );
-         if ( sleeping_.load( std::memory_order_relaxed ) )
-         {
-            ring_doorbell( );
-         }
       }
 
       auto run( ) noexcept -> void
@@ -253,7 +250,7 @@ export namespace ash
                break;
             }
             //
-            // 3. Stay awake for a short while: bursty producers then never pay for a wake-up.
+            // 3. Right after activity, yield instead of sleeping: a burst then keeps being drained as it arrives.
             if ( idle_spins < idle_spin_limit )
             {
                ++idle_spins;
@@ -261,18 +258,8 @@ export namespace ash
                continue;
             }
             //
-            // 4. Announce sleep, then re-check the ring before blocking (pairs with the fence in stage()). The ticket is snapshotted first, so a ring
-            //    racing this check still wakes the wait.
-            std::uint32_t const ticket{ doorbell_.load( std::memory_order_acquire ) };
-            sleeping_.store( true, std::memory_order_relaxed );
-            std::atomic_thread_fence( std::memory_order_seq_cst );
-            if ( bool const pool_drained{ head_.load( std::memory_order_relaxed ) == tail_.load( std::memory_order_relaxed ) };
-                 pool_drained && not is_stop_requested( ) )
-            {
-               doorbell_.wait( ticket, std::memory_order_acquire );
-            }
-            sleeping_.store( false, std::memory_order_relaxed );
-            idle_spins = 0;
+            // 4. Idle: sleep until the next poll. Nobody wakes the worker early, so the producer never pays for it.
+            std::this_thread::sleep_for( P::poll_interval );
          }
       }
 
@@ -296,14 +283,8 @@ export namespace ash
          return tail - first;
       }
 
-      CBR_FORCE_INLINE auto slot_at( std::size_t index ) noexcept -> message_type& { return ring_[index % P::pool_size]; }
-      CBR_FORCE_INLINE auto slot_at( std::size_t index ) const noexcept -> message_type const& { return ring_[index % P::pool_size]; }
-
-      auto ring_doorbell( ) noexcept -> void
-      {
-         doorbell_.fetch_add( 1, std::memory_order_release );
-         doorbell_.notify_one( );
-      }
+      CBR_FORCE_INLINE auto slot_at( std::size_t index ) noexcept -> message_type& { return ( *ring_ )[index % P::pool_size]; }
+      CBR_FORCE_INLINE auto slot_at( std::size_t index ) const noexcept -> message_type const& { return ( *ring_ )[index % P::pool_size]; }
 
       auto request_stop( ) noexcept -> void { stop_token_.test_and_set( std::memory_order_release ); }
       auto is_stop_requested( ) const noexcept -> bool { return stop_token_.test( std::memory_order_acquire ); }

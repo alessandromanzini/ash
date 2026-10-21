@@ -10,7 +10,7 @@ export module ash:policy;
  */
 export namespace ash::policy
 {
-   struct Sync
+   struct Sync //TODO: use something better than a mutex.
    {
       struct access_policy_tag
       { };
@@ -18,8 +18,8 @@ export namespace ash::policy
       mutable std::mutex mutex{};
 
       Sync( ) noexcept = default;
-      Sync( Sync const& ) noexcept { }
-      Sync( Sync&& ) noexcept { }
+      inline Sync( Sync const& ) noexcept { }
+      inline Sync( Sync&& ) noexcept { }
 
       template <std::invocable F> auto gate( F func ) const noexcept( std::is_nothrow_invocable_v<F> ) -> decltype( func( ) )
       {
@@ -63,7 +63,6 @@ export namespace ash::policy
 
       static constexpr auto dispatch_timing = DispatchTiming::direct;
       static constexpr auto retention_policy = RetentionPolicy::wine;
-      static constexpr std::size_t pool_size{ 0 };
       static constexpr std::size_t inline_buffer_size{ 512 };
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
    } inline constexpr direct;
@@ -76,9 +75,14 @@ export namespace ash::policy
     *
     * @warning Entries are dropped without notice once the ring is full ('wine' retention), so sustained logging is capped by the worker's
     *          throughput. Entries still queued are lost if the process crashes or aborts.
-    * @note Entries can be written after unrelated output that happened later on the same streams.
+    * @note Entry order is not guaranteed.
     * @note Every argument type needs a \c traits::Codec specialization.
-    * @note When logging is sparse the worker sleeps between entries, and each entry pays for waking it up.
+    * @note A \c pool_size of 256 will allocate 64KB on the heap, which absorbs bursts of ~2.5M entries/s for one poll interval while staying mostly
+    *       cache-resident. Larger rings absorb more but cost the caller latency (the slots it writes are no longer in L1).
+    * @note Setting \c inline_buffer_size to \p 0 defaults to the optimal pool \c Message size.
+    * @note The caller never wakes the worker: after a short burst of yielding, an idle worker sleeps \p poll_interval between checks of the ring.
+    *       Entries can therefore take up to \p poll_interval to be written, and a burst larger than \p pool_size that arrives while the worker
+    *       sleeps drops the excess.
     */
    struct Deferred
    {
@@ -87,9 +91,10 @@ export namespace ash::policy
 
       static constexpr auto dispatch_timing = DispatchTiming::deferred;
       static constexpr auto retention_policy = RetentionPolicy::wine;
-      static constexpr std::size_t pool_size{ 64 };
-      static constexpr std::size_t inline_buffer_size{ 0 }; // Setting this value to 0 defaults to the optimal Message size.
+      static constexpr std::size_t pool_size{ 256 };
+      static constexpr std::size_t inline_buffer_size{ 0 };
       static constexpr auto overflow_policy = OverflowPolicy::truncate;
+      static constexpr std::chrono::microseconds poll_interval{ 100 };
    } inline constexpr deferred;
 }
 
@@ -112,11 +117,15 @@ export namespace ash::traits
    };
 
    template <typename P>
-   concept dispatch_policy = detail::policy<P> && requires { typename P::dispatch_policy_tag; } && requires {
+   concept dispatch_policy = detail::policy<P> && requires {
       { P::dispatch_timing } -> std::convertible_to<policy::DispatchTiming>;
       { P::retention_policy } -> std::convertible_to<policy::RetentionPolicy>;
       { P::overflow_policy } -> std::convertible_to<policy::OverflowPolicy>;
-      { P::pool_size } -> std::convertible_to<std::size_t>;
       { P::inline_buffer_size } -> std::convertible_to<std::size_t>;
+
+      requires P::dispatch_timing != policy::DispatchTiming::deferred || requires {
+         { P::pool_size } -> std::convertible_to<std::size_t>;
+         { P::poll_interval } -> std::convertible_to<std::chrono::microseconds>;
+      };
    };
 }

@@ -19,6 +19,9 @@ export namespace ash::schema
       /// - `per_block`: the title is written once at the start of each entry.
       enum class TitleInjection : std::uint8_t { none, per_block };
 
+      /// Name of the logger, rendered by the `{ID}` title keyword (e.g. "render", "audio").
+      std::string identity{ "ash" };
+
       /// Stream used for regular (informational) log output.
       std::reference_wrapper<std::ostream> log_stream{ std::clog };
 
@@ -28,8 +31,8 @@ export namespace ash::schema
       /// Determines when @ref title_format is expanded and written.
       TitleInjection title_injection{ TitleInjection::per_block };
 
-      /// Title written before each entry, parsed at compile time; see \p Format for the supported keywords.
-      Format title_format{ "[{TIME:%H:%M:%S}] [{SIG:u}] [{ID}] at {PATH}:{LINE}:{COLUMN}" };
+      /// Title written before each entry, parsed at compile time; see \p CompiledFormat for the supported keywords.
+      CompiledFormat title_format{ "[{TIME:%H:%M:%S}] [{SIG:u}] [{ID}] at {PATH}:{LINE}:{COLUMN}" };
 
       /// Content appended after each write (e.g. block separator).
       std::string trailer_content{ "\n\n" };
