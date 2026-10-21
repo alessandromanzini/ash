@@ -73,22 +73,9 @@ message( STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
 # COMPILER-SPECIFIC SETTINGS
 # ========================================
 #
-if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
-    #
-    set( CBRIDGE_SRC_FILENAME "clang_cbridge.cpp" )
-    #
-elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
-    #
-    set( CBRIDGE_SRC_FILENAME "gnu_cbridge.cpp" )
-    #
-elseif( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
+if( CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" )
     #
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP" ) # Enable parallel compilation on MSVC.
-    set( CBRIDGE_SRC_FILENAME "msvc_cbridge.cpp" )
-    #
-else()
-    #
-    message( FATAL_ERROR "Unsupported compiler... COMPILER_ID=\"${CMAKE_CXX_COMPILER_ID}\"" )
     #
 endif()
 message( STATUS "Using ${CMAKE_CXX_COMPILER_ID} compiler configuration." )
@@ -111,6 +98,23 @@ foreach( OUTPUT_CONFIG ${CMAKE_CONFIGURATION_TYPES} )
     set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} "${CMAKE_BINARY_DIR}/lib" )
     #
 endforeach()
+#
+#
+# ========================================
+# EXTERNAL DEPENDENCIES
+# ========================================
+#
+# Make sure the submodules under external/ are checked out before fetching them.
+cdrk_ensure_submodules()
+#
+include( FetchContent )
+#
+# bhop (generic compile-time utilities and containers), built from its submodule. Exceptions and rtti are baked into the module BMIs, so bhop
+# must be built with the same settings as ash.
+set( BHOP_ENABLE_EXCEPTIONS ${ASH_ENABLE_EXCEPTIONS} )
+set( BHOP_ENABLE_RTTI ${ASH_ENABLE_RTTI} )
+FetchContent_Declare( bhop SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/bhop" )
+FetchContent_MakeAvailable( bhop )
 #
 #
 # ========================================

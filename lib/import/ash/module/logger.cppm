@@ -2,9 +2,11 @@ module;
 
 #include <ash/pch.hpp>
 
-#include <ash/cbridge.hpp>
+#include <bhop/cbridge.hpp>
 
 export module ash:logger;
+
+import bhop;
 
 import :dispatch;
 import :format;
@@ -16,35 +18,6 @@ import :write_config;
 
 namespace ash::detail
 {
-   /**
-    * Key equality for \c std::source_location structure. The file name is compared last for faster evaluation. When the line and column match, it
-    * performs a final character of the file name, short-circuiting in case of the same TU case where the c-string address would be the same, falling
-    * back to character-per-character test.
-    */
-   struct SourceLocationCmpEq
-   {
-      [[nodiscard]] inline auto operator( )( std::source_location const& lhs, std::source_location const& rhs ) const noexcept -> bool
-      {
-         return lhs.line( ) == rhs.line( ) && lhs.column( ) == rhs.column( ) &&
-                ( lhs.file_name( ) == rhs.file_name( ) || std::string_view{ lhs.file_name( ) } == rhs.file_name( ) );
-      }
-   };
-
-   /**
-    * Hash for \c std::source_location, keyed on the call site's line/column pair.
-    * @note The file name is deliberately left out of the hash since its pointer is not stable for the same header included in different TUs, which
-    *       means each hash would cost a full scan.
-    */
-   struct SourceLocationHash
-   {
-      [[nodiscard]] inline auto operator( )( std::source_location const& loc ) const noexcept -> std::size_t
-      {
-         // Fibonacci (golden ratio) multiplicative hash over the packed line/column pair.
-         std::uint64_t const packed{ static_cast<std::uint64_t>( loc.line( ) ) << 32 | loc.column( ) };
-         return static_cast<std::size_t>( packed * 0x9E37'79B9'7F4A'7C15ULL );
-      }
-   };
-
    struct SiteHistory
    {
       std::uint32_t hits{ 0 };
@@ -103,8 +76,9 @@ export namespace ash
 
       ~LogHandle( ) noexcept
       {
-         std::apply( [this]( auto&&... args ) { logger_.submit( signal_, where_, rules_, fmt_, std::forward<decltype( args )>( args )... ); },
-                     std::move( args_ ) );
+         std::apply(
+           [this]( auto&&... args ) { logger_.submit( signal_, where_, rules_, fmt_, std::forward<decltype( args )>( args )... ); },
+           std::move( args_ ) );
       }
 
       LogHandle( LogHandle const& ) = delete;
@@ -177,24 +151,38 @@ export namespace ash
     * @note Streams referenced by \p WriteConfig must remain valid for the entire lifetime of \p Logger, including any deferred writes still pending
     *       on the worker thread at destruction time.
     *
-    * @note Choosing between \p policy::Direct and \p policy::Deferred trades delivery guarantees for caller latency; see their documentation.
+    * @note Choosing between direct (\p policy::direct_*) and deferred (\p policy::deferred_*) dispatch trades delivery guarantees for caller
+    *       latency; see \p policy::Direct and \p policy::Deferred.
     *
-    * @tparam AccessPolicy   Policy controlling synch vs unsynch access.
-    * @tparam DispatchPolicy Policy controlling direct vs deferred dispatch.
+    * @tparam D Policy controlling direct vs deferred dispatch.
+    * @tparam A Policy controlling sync vs unsync access.
+    *
+    * Both can be deduced from the constructor arguments, either as a pair or as a \p policy::Bundle preset:
+    * @code
+    *    ash::Logger a{ ash::policy::deferred, ash::policy::unsync };
+    *    ash::Logger b{ ash::policy::deferred_unsync };
+    * @endcode
     */
-   template <traits::access_policy AccessPolicy, traits::dispatch_policy DispatchPolicy> class Logger final
+   template <traits::dispatch_policy D, traits::access_policy A> class Logger final
    {
-      static_assert( DispatchPolicy::retention_policy != policy::RetentionPolicy::milk, "Milk policy is not supported!" );
+      static_assert( D::retention_policy != policy::RetentionPolicy::milk, "Milk policy is not supported!" );
 
       template <typename LoggerT, typename... Args> friend class LogHandle;
       template <typename... Args> using handle_type = LogHandle<Logger, Args...>;
 
    public:
-      explicit Logger( AccessPolicy access, DispatchPolicy dispatch, schema::WriteConfig config = {} ) noexcept
-         : access_policy_{ std::move( access ) }
-         , dispatch_policy_{ std::move( dispatch ) }
-         , dispatcher_{ std::move( config ) }
+      explicit Logger( schema::WriteConfig config = {} ) noexcept
+         : dispatcher_{ std::move( config ) }
       { }
+
+      explicit Logger( policy::Bundle<D, A>, schema::WriteConfig config = {} ) noexcept
+         : Logger{ std::move( config ) }
+      { }
+
+      explicit Logger( D, A, schema::WriteConfig config = {} ) noexcept
+         : Logger{ std::move( config ) }
+      { }
+
       ~Logger( ) = default;
 
       Logger( Logger const& ) = delete;
@@ -240,13 +228,12 @@ export namespace ash
       auto clear_filter( ) noexcept -> void { set_filter( Signal::trace, Filter::Op::gt_eq ); }
 
    private:
-      [[no_unique_address]] AccessPolicy access_policy_;
-      [[no_unique_address]] DispatchPolicy dispatch_policy_;
+      // Per call-site counters for the site modifiers. Shared by every thread reaching the same call site, so they have their own lock, which is
+      // only taken when a site modifier was requested.
+      std::unordered_map<std::source_location, detail::SiteHistory, bhop::SourceLocationHash, bhop::SourceLocationCmpEq> history_{};
+      A::lock_type history_lock_{};
 
-      std::unordered_map<std::source_location, detail::SiteHistory, detail::SourceLocationHash, detail::SourceLocationCmpEq> history_{};
-
-      Dispatcher<DispatchPolicy> dispatcher_;
-      schema::WriteMetadata::sequence_id_type sequence_id_{ 0 };
+      Dispatcher<D, A> dispatcher_;
 
       struct Filter
       {
@@ -255,38 +242,28 @@ export namespace ash
       };
       static_assert( std::atomic<Filter>::is_always_lock_free, "Filter must stay small enough for a lock-free atomic." );
 
-      // Atomic because it is read before entering the access gate, so the filtered-out path never pays for the lock.
       std::atomic<Filter> filter_{ Filter{} };
 
       /**
        * Write one entry. Called by \p LogHandle when it is destroyed.
        */
       template <typename... Args>
-      auto submit( Signal sig, std::source_location const& where, detail::EmitRules const& rules, std::format_string<Args...> fmt,
-                   Args&&... args ) noexcept -> void
+      auto submit(
+        Signal sig, std::source_location const& where, detail::EmitRules const& rules, std::format_string<Args...> fmt, Args&&... args ) noexcept
+        -> void
       {
          if ( not rules.enabled || not can_dispatch( sig ) )
          {
             return;
          }
          //
-         access_policy_.gate( [&] {
-            // Apply site rules inside the gate so the counter mutation is covered by the access policy. std::source_location does not have
-            // collisions, but the same location can be accessed by different threads, therefore we need to sync.
-            if ( rules.site_scoped( ) && not admit( where, rules ) )
-            {
-               return;
-            }
-            //
-            // In case of a deferred dispatcher, we must guarantee the SPSC CONTRACT ...
-            // A. UNSYNC access policy: we only ever access the engine from the same thread, no issues here.
-            // B. SYNC access policy: the gate mutex ensures the contract.
-            schema::WriteMetadata const metadata{
-               .sequence_id = sequence_id_++, .signal = sig, .timestamp = time::TickClock::now( ), .where = where
-            };
-            //
-            dispatcher_.dispatch( metadata, fmt, std::forward<Args>( args )... );
-         } );
+         if ( rules.site_scoped( ) && not admit( where, rules ) )
+         {
+            return;
+         }
+         //
+         schema::WriteMetadata const metadata{ .sequence_id = 0, .signal = sig, .timestamp = time::TickClock::now( ), .where = where };
+         dispatcher_.dispatch( metadata, fmt, std::forward<Args>( args )... );
       }
 
       /**
@@ -296,6 +273,7 @@ export namespace ash
        */
       [[nodiscard]] CBR_NO_INLINE auto admit( std::source_location const& where, detail::EmitRules const& rules ) noexcept -> bool
       {
+         std::lock_guard lock{ history_lock_ };
          auto& [hits, writes, last_write]{ history_[where] };
          //
          if ( std::uint32_t const hit{ hits++ }; hit % rules.every != 0 )

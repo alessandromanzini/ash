@@ -1,0 +1,3 @@
+[submodule "external/bhop"]
+	path = external/bhop
+	url = https://github.com/alessandromanzini/bunny-hop.git

@@ -2,9 +2,11 @@ module;
 
 #include <ash/pch.hpp>
 
-#include <ash/cbridge.hpp>
+#include <bhop/cbridge.hpp>
 
 export module ash:log_stream;
+
+import bhop;
 
 import :format;
 import :policy;
@@ -41,7 +43,7 @@ export namespace ash
                anchor_ = time::TickAnchor{};
             }
             //
-            CharReservoir<char, buffer_size> reservoir{ buf };
+            bhop::CharReservoir<char, buffer_size> reservoir{ buf };
             config_.title_format.render( reservoir, metadata, config_.identity, anchor_.to_system( metadata.timestamp ) );
             reservoir.drain( );
             buf->sputc( '\n' );

@@ -2,20 +2,12 @@ module;
 
 #include <ash/pch.hpp>
 
-#include <ash/cbridge.hpp>
+#include <bhop/cbridge.hpp>
 
 export module ash:codec;
 
+import bhop;
 
-namespace ash::traits::detail
-{
-   template <typename T, typename... Ts> concept one_of = ( std::same_as<T, Ts> || ... );
-}
-
-export namespace ash::traits
-{
-   template <typename T> concept character = detail::one_of<std::remove_cv_t<T>, char, char8_t, char16_t, char32_t>;
-}
 
 export namespace ash::traits
 {
@@ -41,7 +33,7 @@ export namespace ash::traits
     * that would be dereferenced later (e.g. char*) must not be stored as a pointer.
     */
    template <typename T>
-      requires std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_null_pointer_v<T> || detail::one_of<T, void*, void const*>
+      requires std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_null_pointer_v<T> || bhop::traits::one_of<T, void*, void const*>
    struct Codec<T>
    {
       using value_type = T;
@@ -67,7 +59,7 @@ namespace ash::traits::detail
    /**
     * Shared base for every string-like codec: the characters are copied, and the worker reads them back as a view into the message.
     */
-   template <character C> struct StringCodec
+   template <bhop::traits::character C> struct StringCodec
    {
       static_assert( sizeof( C ) == 1, "Wide strings padding alignment is not implemented yet." );
 
@@ -89,14 +81,14 @@ namespace ash::traits::detail
 
 export namespace ash::traits
 {
-   template <character C> struct Codec<std::basic_string_view<C>> : detail::StringCodec<C>
+   template <bhop::traits::character C> struct Codec<std::basic_string_view<C>> : detail::StringCodec<C>
    { };
 
-   template <character C> struct Codec<std::basic_string<C>> : detail::StringCodec<C>
+   template <bhop::traits::character C> struct Codec<std::basic_string<C>> : detail::StringCodec<C>
    { };
 
    // Covers both C const* and mutable C*. The terminator is not stored: the worker reads the characters back as a view.
-   template <character C> struct Codec<C*> : detail::StringCodec<C>
+   template <bhop::traits::character C> struct Codec<C*> : detail::StringCodec<C>
    {
       [[nodiscard]] static auto serial_size( C const* cstr ) noexcept -> std::size_t
       {
@@ -113,7 +105,7 @@ export namespace ash::traits
    };
 
    // Arrays are read up to the first terminator (string literals and partially filled char buffers alike), never past N.
-   template <character C, std::size_t N> struct Codec<C[N]> : detail::StringCodec<C>
+   template <bhop::traits::character C, std::size_t N> struct Codec<C[N]> : detail::StringCodec<C>
    {
       [[nodiscard]] static auto serial_size( C const ( &buffer )[N] ) noexcept -> std::size_t
       {
@@ -126,16 +118,11 @@ export namespace ash::traits
 
 namespace ash::traits::detail
 {
-   template <std::size_t length>
-   using length_t = std::conditional_t<
-     length <= std::numeric_limits<std::uint8_t>::max( ), std::uint8_t,
-     std::conditional_t<length <= std::numeric_limits<std::uint16_t>::max( ), std::uint16_t, std::uint32_t>>;
-
    template <typename T> struct CodecTraits
    {
       using codec_type = Codec<std::remove_cvref_t<T>>;
       using value_type = codec_type::value_type;
-      using length_type = length_t<codec_type::max_serial_size>; // header stores the payload size only
+      using length_type = bhop::traits::uint_fit_t<codec_type::max_serial_size>; // header stores the payload size only
 
       // We need a header only if the size is not fixed.
       static constexpr std::size_t header_size{ codec_type::fixed_size != 0 ? sizeof( length_type ) : 0 };

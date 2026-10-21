@@ -25,7 +25,7 @@ import ash;
 
 auto main( ) -> int
 {
-   ash::Logger logger{ ash::policy::unsync, ash::policy::deferred };
+   ash::Logger logger{ ash::policy::deferred_unsync };
    logger.info( "hello from {}", "ash" );
 }
 ```
@@ -132,15 +132,30 @@ The deferred ring holds 256 entries (64 KB) by default. The worker never needs t
 
 ## Access policies
 
-- `ash::policy::unsync`: no locking. Use one logger per thread.
-- `ash::policy::sync`: calls are serialized with a mutex, so a logger can be shared between threads. With the deferred dispatcher this also guarantees its single-producer contract.
+- `ash::policy::unsync`: no locking at all. Use one logger per thread.
+- `ash::policy::sync`: a logger can be shared between threads. Locks cover only the state that is actually shared, never a whole log call:
+  - **Direct:** the message is formatted on the calling thread before any lock; only the write to the stream is serialized.
+  - **Deferred:** no lock on the logging path. Each thread gets its own ring, and the worker merges them by timestamp, so logging threads never contend. Entries from one thread keep their order; across threads they are ordered by tick, so two calls on different threads less than one tick apart (~42 ns on Apple Silicon) may swap.
+  - **Deferred, ordered** (`ash::policy::deferred_ordered_sync`): entries from every thread are written in exact call order. All threads share one lock-free ring, and claiming a slot is one atomic operation, which contends when several threads log at once.
+  - **Call-site modifiers** (`once`, `at_most`, `every`, `throttle`) take a separate lock, only when they are used.
+
+## Choosing policies
+
+Pass a dispatch policy and an access policy, or one of the presets that bundles them:
+
+```cpp
+ash::Logger a{ ash::policy::deferred, ash::policy::unsync };
+ash::Logger b{ ash::policy::deferred_unsync }; // same as a
+```
+
+The presets are `direct_sync`, `direct_unsync`, `deferred_sync`, `deferred_unsync` and `deferred_ordered_sync`. A custom policy is combined the same way, e.g. `ash::Logger logger{ MyDeferred{}, ash::policy::sync }`.
 
 ## Configuration
 
-Pass a `WriteConfig` as the logger's third argument:
+Pass a `WriteConfig` as the logger's last argument:
 
 ```cpp
-ash::Logger logger{ ash::policy::unsync, ash::policy::deferred, {
+ash::Logger logger{ ash::policy::deferred_unsync, {
    .identity = "render",
    .title_format = "[{TIME:HH:MM:SS.mmm}] [{SIG:us}] [{ID}] {FUNCTION}",
    .trailer_content = "\n",

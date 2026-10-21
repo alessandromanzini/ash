@@ -2,9 +2,11 @@ module;
 
 #include <ash/pch.hpp>
 
-#include <ash/cbridge.hpp>
+#include <bhop/cbridge.hpp>
 
 export module ash:dispatch;
+
+import bhop;
 
 import :codec;
 import :policy;
@@ -22,11 +24,10 @@ namespace ash::detail
 
    /**
     * A deferred log record: metadata plus the burnt format arguments, held in a fixed inline buffer.
-    * @note Aligned to \c std::hardware_destructive_interference_size to avoid false sharing.
-    * @note This costs nothing as long as \p N is chosen so the record lands on a multiple of the interference size... the header (metadata, renderer,
-    *       format view and flags) occupies 51 bytes and \p N = 205 by default, which yields exactly 256.
+    * @note The header (metadata, renderer, format view and flags) occupies 51 bytes. The default capacities below make each ring slot exactly 256
+    *       bytes: 205 in a plain slot, 197 next to the sequence number of the ordered ring's slots.
     */
-   template <std::size_t N = 205> struct alignas( std::hardware_destructive_interference_size ) Message
+   template <std::size_t N> struct Message
    {
       static constexpr std::size_t capacity{ N };
 
@@ -37,8 +38,28 @@ namespace ash::detail
       bool truncated;
       std::byte body[N];
    };
-   static_assert( std::is_trivially_copyable_v<Message<>>, "Message must be trivially copyable." );
-   static_assert( sizeof( Message<> ) == 256, "Default Message capacity no longer packs the record into 256 bytes." );
+
+   inline constexpr std::size_t plain_message_capacity{ 205 };
+   inline constexpr std::size_t sequenced_message_capacity{ 197 };
+
+   static_assert( std::is_trivially_copyable_v<Message<plain_message_capacity>>, "Message must be trivially copyable." );
+   static_assert( bhop::SpscRing<Message<plain_message_capacity>, 1>::slot_size == 256, "Default plain slot no longer packs into 256 bytes." );
+   static_assert( bhop::MpscRing<Message<sequenced_message_capacity>, 1>::slot_size == 256, "Default sequenced slot no longer packs into 256 bytes." );
+
+   template <traits::dispatch_policy D>
+   using plain_message_t = Message<D::inline_buffer_size == 0 ? plain_message_capacity : D::inline_buffer_size>;
+
+   template <traits::dispatch_policy D>
+   using sequenced_message_t = Message<D::inline_buffer_size == 0 ? sequenced_message_capacity : D::inline_buffer_size>;
+
+   /**
+    * The ring a deferred dispatcher uses: a single SPSC ring when only one thread logs, otherwise one ring per thread, or one shared ring when
+    * exact order was requested.
+    */
+   template <traits::dispatch_policy D, traits::access_policy A>
+   using deferred_ring_t = std::conditional_t<not A::multi_producer, bhop::SpscRing<plain_message_t<D>, D::pool_size>,
+                                              std::conditional_t<D::ordered, bhop::MpscRing<sequenced_message_t<D>, D::pool_size>,
+                                                                 bhop::ThreadRings<plain_message_t<D>, D::pool_size>>>;
 }
 
 namespace ash::detail
@@ -50,7 +71,8 @@ namespace ash::detail
     * @return { bytes written, truncated }.
     */
    template <typename... Args>
-   CBR_FORCE_INLINE auto render_to_buf( std::span<char> dst, std::format_string<Args...> fmt, Args&&... args ) noexcept -> std::pair<std::size_t, bool>
+   CBR_FORCE_INLINE auto render_to_buf( std::span<char> dst, std::format_string<Args...> fmt, Args&&... args ) noexcept
+     -> std::pair<std::size_t, bool>
    {
       auto const [out, needed] = std::format_to_n( dst.data( ), std::ssize( dst ), fmt, std::forward<Args>( args )... );
       return { static_cast<std::size_t>( out - dst.data( ) ), std::cmp_greater( needed, dst.size( ) ) };
@@ -63,21 +85,39 @@ namespace ash::detail
    template <typename BurnerT> auto burn_to_str( std::string& out, std::string_view fmt, std::span<std::byte const> payload ) noexcept -> void
    {
       out.clear( );
-      BurnerT::feed( payload, [&]( auto const&... values ) {
-         std::vformat_to( std::back_inserter( out ), fmt, std::make_format_args( values... ) );
-      } );
+      BurnerT::feed(
+        payload, [&]( auto const&... values ) { std::vformat_to( std::back_inserter( out ), fmt, std::make_format_args( values... ) ); } );
+   }
+
+   /**
+    * Burn the arguments into \p message on the caller thread.
+    */
+   template <std::size_t N, typename... Ts>
+   CBR_FORCE_INLINE auto fill( Message<N>& message, schema::WriteMetadata const& metadata, std::string_view fmt, Ts const&... args ) noexcept -> void
+   {
+      using burner_type = Burner<Ts...>;
+      static_assert( burner_type::fixed_footprint <= N, "Fixed-size arguments exceed the message capacity." );
+      //
+      auto const [written, truncated] = burner_type::burn( message.body, args... );
+      message.body_len = static_cast<std::uint16_t>( written );
+      message.truncated = truncated;
+      message.render_fn = &burn_to_str<burner_type>;
+      message.fmt = fmt;
+      message.metadata = metadata;
    }
 }
 
 export namespace ash
 {
-   template <traits::dispatch_policy P> class Dispatcher;
+   template <traits::dispatch_policy D, traits::access_policy A> class Dispatcher;
 
    /**
     * @brief Direct dispatch: render and write on the caller thread.
+    *
+    * @note If sync, only the actual write to stream is lock-guarded.
     */
-   template <traits::dispatch_policy P> requires( P::dispatch_timing == policy::DispatchTiming::direct )
-   class Dispatcher<P> final
+   template <traits::dispatch_policy D, traits::access_policy A> requires( D::dispatch_timing == policy::DispatchTiming::direct )
+   class Dispatcher<D, A> final
    {
    public:
       explicit Dispatcher( schema::WriteConfig config ) noexcept
@@ -85,60 +125,66 @@ export namespace ash
       { }
 
       template <typename... Args>
-      CBR_FORCE_INLINE auto dispatch( schema::WriteMetadata const& metadata, std::format_string<Args...> fmt, Args&&... args ) const noexcept -> void
+      CBR_FORCE_INLINE auto dispatch( schema::WriteMetadata metadata, std::format_string<Args...> fmt, Args&&... args ) const noexcept -> void
       {
-         std::array<char, P::inline_buffer_size> stack_buffer;
+         // 1. Apply the format on this thread's stack outside the lock.
+         std::array<char, D::inline_buffer_size> stack_buffer;
          auto const [written, truncated] = detail::render_to_buf( stack_buffer, fmt, std::forward<Args>( args )... );
          //
-         if constexpr ( P::overflow_policy == policy::OverflowPolicy::truncate )
+         // 2. Write to stream, which is the critical section. The title's tick anchor and the sequence counter are what concurrent callers share.
+         if constexpr ( D::overflow_policy == policy::OverflowPolicy::truncate )
          {
             // "truncate" policy: emit the bytes that fit the stack budget, regardless of truncation.
-            stream_.write<P::inline_buffer_size>( metadata, std::string_view{ stack_buffer.data( ), written } );
+            write( metadata, std::string_view{ stack_buffer.data( ), written } );
          }
-         else if constexpr ( P::overflow_policy == policy::OverflowPolicy::send_to_heap )
+         else if constexpr ( D::overflow_policy == policy::OverflowPolicy::send_to_heap )
          {
-            // "send_to_heap" policy: if truncation happens, resort to std::format.
+            // "send_to_heap" policy: if truncation happens, resort to std::format, still before taking the lock.
             if ( not truncated ) [[likely]]
             {
-               stream_.write<P::inline_buffer_size>( metadata, std::string_view{ stack_buffer.data( ), written } );
+               write( metadata, std::string_view{ stack_buffer.data( ), written } );
             }
             else
             {
-               stream_.write<P::inline_buffer_size>( metadata, std::format( fmt, std::forward<Args>( args )... ) );
+               write( metadata, std::format( fmt, std::forward<Args>( args )... ) );
             }
          }
       }
 
    private:
       LogStream stream_;
+      mutable A::lock_type write_lock_{};
+      mutable schema::WriteMetadata::sequence_id_type next_sequence_{ 0 };
+
+      CBR_FORCE_INLINE auto write( schema::WriteMetadata& metadata, std::string_view body ) const noexcept -> void
+      {
+         std::lock_guard lock{ write_lock_ };
+         metadata.sequence_id = next_sequence_++;
+         stream_.write<D::inline_buffer_size>( metadata, body );
+      }
    };
 
    /**
-    * Deferred dispatch: chunks are queued in a ring buffer and drained on a dedicated worker thread.
-    * The ring is a lock-free SPSC queue: the producer owns the "tail", the consumer owns the "head", and the payload is published/observed through
-    * release/acquire ordering. The producer never wakes the worker: the worker polls, yielding briefly after activity and otherwise sleeping
-    * \c P::poll_interval between checks, so logging never costs the caller a system call.
+    * Deferred dispatch: entries are queued in a ring and drained on a dedicated worker thread. The worker polls on a \c D::poll_interval, yielding
+    * briefly after activity, so logging never costs the caller a system call.
     *
     * Format arguments are not rendered on the caller thread: they are burnt into the slot through their \c traits::Codec, and the worker formats
-    * them. String arguments are copied, so nothing in the record refers back to the caller's storage.
+    * them. String arguments are copied, so nothing in the record refers back to the caller's storage (safe out-of-scope arguments).
     *
-    * @note SPSC CONTRACT: there must be at most one producer at a time.
+    * The ring depends on the policies (see \c detail::deferred_ring_t): one SPSC ring for a single-threaded access policy; with a multithreaded
+    * one, a ring per thread (no contention) or, when \c D::ordered, one shared lock-free ring (exact call order).
     */
-   template <traits::dispatch_policy P> requires( P::dispatch_timing == policy::DispatchTiming::deferred )
-   class Dispatcher<P> final
+   template <traits::dispatch_policy D, traits::access_policy A> requires( D::dispatch_timing == policy::DispatchTiming::deferred )
+   class Dispatcher<D, A> final
    {
-      static_assert( P::retention_policy == policy::RetentionPolicy::wine, "Deferred Dispatcher only supports 'wine' retention policy." );
-      static_assert( P::overflow_policy == policy::OverflowPolicy::truncate, "Deferred Dispatcher only supports 'truncate' overflow policy." );
+      static_assert( D::retention_policy == policy::RetentionPolicy::wine, "Deferred Dispatcher only supports 'wine' retention policy." );
+      static_assert( D::overflow_policy == policy::OverflowPolicy::truncate, "Deferred Dispatcher only supports 'truncate' overflow policy." );
 
-      static constexpr std::size_t message_size{ P::inline_buffer_size == 0 ? detail::Message<>::capacity : P::inline_buffer_size };
-      using message_type = detail::Message<message_size>;
-      using ring_type = std::array<message_type, P::pool_size>;
+      using ring_type = detail::deferred_ring_t<D, A>;
+      using message_type = ring_type::value_type;
 
       // Empty polls the worker spends yielding before it sleeps, so a burst is drained continuously instead of once per poll interval.
       static constexpr std::size_t idle_spin_limit{ 64 };
-
-      // Producer-owned and consumer-owned state live on separate cache lines, so neither side's writes evict the other's.
-      static constexpr std::size_t cache_line{ std::hardware_destructive_interference_size };
 
    public:
       explicit Dispatcher( schema::WriteConfig config ) noexcept
@@ -161,69 +207,26 @@ export namespace ash
       auto operator=( Dispatcher&& ) noexcept -> Dispatcher& = delete;
 
       /**
-       * Burn the arguments into the ring slot; the worker formats them with \p fmt.
+       * Burn the arguments into a ring slot; the worker formats them with \p fmt.
        * @note The format string must have static storage duration, which std::format_string guarantees for literals.
        */
       template <typename... Args>
       auto dispatch( schema::WriteMetadata const& metadata, std::format_string<Args...> fmt, Args&&... args ) noexcept -> void
       {
-         stage<std::remove_cvref_t<Args>...>( metadata, fmt.get( ), args... );
+         // A full ring drops the newest entry ('wine' retention).
+         std::ignore = ring_.try_push( [&]( message_type& message ) {
+            detail::fill<message_type::capacity, std::remove_cvref_t<Args>...>( message, metadata, fmt.get( ), args... );
+         } );
       }
 
    private:
-      // Read-only once the worker runs.
       schema::WriteConfig const config_;
-
-      // On the heap, so the dispatcher stays small enough to live on any thread's stack.
-      // We leave it uninitialized because every slot is fully written before it is published, and the worker never reads body bytes past body_len.
-      std::unique_ptr<ring_type> const ring_{ std::make_unique_for_overwrite<ring_type>( ) };
-
-      // PRODUCER line: its write position, and its last known copy of the consumer's position.
-      alignas( cache_line ) std::atomic<std::size_t> tail_{ 0 };
-      std::size_t head_cache_{ 0 };
-
-      // CONSUMER line: its read position.
-      alignas( cache_line ) std::atomic<std::size_t> head_{ 0 };
+      ring_type ring_{};
 
       // Written once by the destructor, read on every poll.
-      alignas( cache_line ) std::atomic_flag stop_token_{};
+      alignas( bhop::traits::cache_line_size_v ) std::atomic_flag stop_token_{};
 
       std::thread worker_{ [this] { run( ); } };
-
-      /**
-       * Burn the arguments into the next ring slot on the caller thread, then publish it.
-       */
-      template <typename... Ts> CBR_FORCE_INLINE auto stage( schema::WriteMetadata const& metadata, std::string_view fmt, Ts const&... args ) noexcept -> void
-      {
-         using burner_type = Burner<Ts...>;
-         static_assert( burner_type::fixed_footprint <= message_type::capacity, "Fixed-size arguments exceed the message capacity." );
-         //
-         std::size_t const tail{ tail_.load( std::memory_order_relaxed ) };
-         //
-         // 1. Only read the consumer's line when the cached head says the ring may be full, then drop the newest entry if it really is (wine
-         //    retention).
-         if ( std::cmp_equal( tail - head_cache_, P::pool_size ) )
-         {
-            head_cache_ = head_.load( std::memory_order_acquire );
-            if ( std::cmp_equal( tail - head_cache_, P::pool_size ) )
-            {
-               return;
-            }
-         }
-         //
-         // 2. Fill the slot, then publish it with a release store on tail_.
-         message_type& slot{ slot_at( tail ) };
-         {
-            auto const [written, truncated] = burner_type::burn( slot.body, args... );
-            slot.body_len = static_cast<std::uint16_t>( written );
-            slot.truncated = truncated;
-         }
-         slot.render_fn = &detail::burn_to_str<burner_type>;
-         slot.fmt = fmt;
-         slot.metadata = metadata;
-         //
-         tail_.store( tail + 1, std::memory_order_release );
-      }
 
       auto run( ) noexcept -> void
       {
@@ -231,12 +234,21 @@ export namespace ash
          //
          std::string scratch{};
          scratch.reserve( 512 );
+         schema::WriteMetadata::sequence_id_type sequence{ 0 };
          std::size_t idle_spins{ 0 };
+         //
+         // Entries are numbered in the order they are written.
+         auto write = [&]( message_type const& message ) {
+            message.render_fn( scratch, message.fmt, { message.body, message.body_len } );
+            schema::WriteMetadata metadata{ message.metadata };
+            metadata.sequence_id = sequence++;
+            stream.write<message_type::capacity>( metadata, scratch );
+         };
          //
          while ( true )
          {
             // 1. Process whatever has been published so far.
-            if ( drain( stream, scratch ) > 0 )
+            if ( drain( write ) > 0 )
             {
                idle_spins = 0;
                continue;
@@ -246,7 +258,7 @@ export namespace ash
             //    drain observes everything.
             if ( is_stop_requested( ) )
             {
-               drain( stream, scratch );
+               drain( write );
                break;
             }
             //
@@ -259,32 +271,32 @@ export namespace ash
             }
             //
             // 4. Idle: sleep until the next poll. Nobody wakes the worker early, so the producer never pays for it.
-            std::this_thread::sleep_for( P::poll_interval );
+            std::this_thread::sleep_for( D::poll_interval );
          }
       }
 
       /**
-       * Write every published slot from head to tail, then free them for the producer.
-       * @return The number of slots written.
+       * Per-thread rings are merged by timestamp; the other rings already hold a single order.
        */
-      auto drain( LogStream const& stream, std::string& scratch ) noexcept -> std::size_t
+      template <typename F> auto drain( F& write ) noexcept -> std::size_t
       {
-         std::size_t const first{ head_.load( std::memory_order_relaxed ) };
-         std::size_t const tail{ tail_.load( std::memory_order_acquire ) };
-         //
-         for ( std::size_t head{ first }; head != tail; ++head )
+         struct ByTimestamp
          {
-            message_type const& slot{ slot_at( head ) };
-            slot.render_fn( scratch, slot.fmt, { slot.body, slot.body_len } );
-            stream.write<message_size>( slot.metadata, scratch );
-         }
+            [[nodiscard]] auto operator( )( message_type const& message ) const noexcept
+            {
+               return message.metadata.timestamp;
+            }
+         };
          //
-         head_.store( tail, std::memory_order_release );
-         return tail - first;
+         if constexpr ( requires { ring_.drain( write, ByTimestamp{} ); } )
+         {
+            return ring_.drain( write, ByTimestamp{} );
+         }
+         else
+         {
+            return ring_.drain( write );
+         }
       }
-
-      CBR_FORCE_INLINE auto slot_at( std::size_t index ) noexcept -> message_type& { return ( *ring_ )[index % P::pool_size]; }
-      CBR_FORCE_INLINE auto slot_at( std::size_t index ) const noexcept -> message_type const& { return ( *ring_ )[index % P::pool_size]; }
 
       auto request_stop( ) noexcept -> void { stop_token_.test_and_set( std::memory_order_release ); }
       auto is_stop_requested( ) const noexcept -> bool { return stop_token_.test( std::memory_order_acquire ); }

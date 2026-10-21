@@ -1,6 +1,6 @@
 #include <ash/__internal/clock.hpp>
 
-#include <ash/config/config.hpp>
+#include <bhop/config/config.hpp>
 #include <mach/mach_time.h>
 
 
@@ -8,7 +8,7 @@ namespace ash::time
 {
    auto TickClock::now( ) noexcept -> repr
    {
-      if constexpr ( cfg::arch_type == cfg::ArchType::arm64 )
+      if constexpr ( bhop::cfg::arch_type == bhop::cfg::ArchType::arm64 )
       {
          repr ticks;
          __asm__ volatile( "mrs %0, cntvct_el0" : "=r"( ticks ) );
@@ -22,7 +22,7 @@ namespace ash::time
 
    auto TickClock::frequency( ) noexcept -> repr
    {
-      if constexpr ( cfg::arch_type == cfg::ArchType::arm64 )
+      if constexpr ( bhop::cfg::arch_type == bhop::cfg::ArchType::arm64 )
       {
          repr hz;
          __asm__ volatile( "mrs %0, cntfrq_el0" : "=r"( hz ) );

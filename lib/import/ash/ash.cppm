@@ -1,7 +1,5 @@
 export module ash;
 
-export import :config;
-
 export import :write_config;
 export import :format;
 export import :signal;

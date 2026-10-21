@@ -2,12 +2,13 @@ module;
 
 #include <ash/pch.hpp>
 
-#include <ash/cbridge.hpp>
+#include <bhop/cbridge.hpp>
 
 export module ash:format;
 
+import bhop;
+
 import :format_flags;
-import :reservoir;
 import :signal;
 import :time;
 
@@ -180,7 +181,7 @@ export namespace ash
        * @param timestamp The entry's wall-clock time, already converted from \c WriteMetadata::timestamp ticks.
        */
       template <std::size_t N>
-      auto render( CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata, std::string_view identity,
+      auto render( bhop::CharReservoir<char, N>& reservoir, schema::WriteMetadata const& metadata, std::string_view identity,
                    std::chrono::system_clock::time_point timestamp ) const -> void
       {
          using Kind = detail::Field::Kind;
@@ -277,7 +278,7 @@ export namespace ash
        * The chrono formatter only takes a full replacement field, so the spec is wrapped as "{:spec}" in a stack buffer first.
        */
       template <std::size_t N>
-      static auto render_generic_time( CharReservoir<char, N>& reservoir, std::string_view spec, std::chrono::system_clock::time_point timestamp )
+      static auto render_generic_time( bhop::CharReservoir<char, N>& reservoir, std::string_view spec, std::chrono::system_clock::time_point timestamp )
         -> void
       {
          std::array<char, detail::max_time_spec_length + 3> fmt{ '{', ':' };

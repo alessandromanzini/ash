@@ -34,15 +34,14 @@ cdrk_module_sources( "${MODULE_TARGET}"
                      SOURCES "platform/win32/*.cpp"
                      IF WIN32 )
 #
-# 5. CBridge headers.
-cdrk_module_sources( "${MODULE_TARGET}"
-                     SOURCES "platform/compiler/${CBRIDGE_SRC_FILENAME}"
-                     NO_PEDANTIC )
-#
 #
 # ========================================
 # EXTERNAL DEPENDENCIES
 # ========================================
+#
+# bhop, linked statically. Linked to the object target so both the static and shared ash libraries get it, and PUBLIC because ash's exported
+# module interfaces import bhop, so consumers need its BMIs too.
+target_link_libraries( "${MODULE_TARGET}-object" PUBLIC bhop::bhop-static )
 #
 # GLM (math library)
 #include( fetch_glm_macro )
