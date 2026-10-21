@@ -9,6 +9,7 @@ export module ash:log_stream;
 import :format;
 import :policy;
 import :signal;
+import :time;
 import :write_config;
 
 
@@ -19,6 +20,7 @@ export namespace ash
     * bulk \c sputn calls.
     *
     * @note Title formatting is optimized by compiling the title format rather than using a generalized \c std::format call.
+    * @note Entry timestamps arrive as raw ticks and are converted here, off the logging caller.
     */
    class LogStream final
    {
@@ -34,8 +36,13 @@ export namespace ash
          //
          if ( config_.title_injection == schema::WriteConfig::TitleInjection::per_block )
          {
+            if ( anchor_.is_stale( metadata.timestamp ) )
+            {
+               anchor_ = time::TickAnchor{};
+            }
+            //
             CharReservoir<char, buffer_size> reservoir{ buf };
-            config_.title_format.render( reservoir, metadata );
+            config_.title_format.render( reservoir, metadata, config_.identity, anchor_.to_system( metadata.timestamp ) );
             reservoir.drain( );
             buf->sputc( '\n' );
          }
@@ -46,6 +53,7 @@ export namespace ash
 
    private:
       schema::WriteConfig const config_;
+      mutable time::TickAnchor anchor_{};
 
       /**
        * Route log stream and err stream depending on the input signal.
