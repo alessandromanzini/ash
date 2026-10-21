@@ -27,6 +27,8 @@ include( cdrake )
 option( ASH_ENABLE_EXCEPTIONS "Enable exceptions for ash target." OFF )
 option( ASH_ENABLE_RTTI "Enable rtti for ash target." OFF )
 #
+option( ASH_IMPORT_BENCHMARK "Import benchmark targets." ON )
+#
 # option( ASH_IMPORT_UNIT_TEST "Import unit test target." ON )
 #
 # Set the compiler settings from the given user options.
@@ -117,6 +119,13 @@ endforeach()
 #
 # Core library.
 add_subdirectory( "lib" )
+#
+# Benchmarks.
+if( "${ASH_IMPORT_BENCHMARK}" )
+    #
+    add_subdirectory( "benchmark" )
+    #
+endif()
 #
 # Test executable.
 if( IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/local" )
